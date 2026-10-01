@@ -1,4 +1,4 @@
-# Ghostwriter Protocol
+# Conspirator Protocol
 
 ## Seats
 

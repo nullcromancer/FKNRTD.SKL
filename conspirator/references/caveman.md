@@ -64,5 +64,5 @@ Full command output stays in `~/.pairing/logs/...` and is loaded only when a sea
 1. Reference repository paths/symbols instead of copying source.
 2. During repair send only latest report + latest failing verification/audit packet.
 3. Use hashes for large logs; retrieve the log from disk only if diagnosing it.
-4. Do not restate the stable role contract in each dispatch; `$ghostwriter` supplies it.
+4. Do not restate the stable role contract in each dispatch; `$conspirator` supplies it.
 5. Keep one fact per line so a later round can preserve only the facts that changed.

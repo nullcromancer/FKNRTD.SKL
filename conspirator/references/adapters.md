@@ -4,7 +4,7 @@ The orchestration runtime has three implementing-seat adapters. All use the same
 
 ## Codex CLI
 
-Skill invocation hint: `$ghostwriter`.
+Skill invocation hint: `$conspirator`.
 
 Runtime shape:
 
@@ -23,7 +23,7 @@ codex_extra_args=[]
 
 ## Cline CLI
 
-Cline discovers the skill from its skills directory and can activate it when asked to use `ghostwriter`.
+Cline discovers the skill from its skills directory and can activate it when asked to use `conspirator`.
 
 Runtime shape:
 
@@ -45,7 +45,7 @@ Cline Skills may be feature-gated depending on the installed Cline version/confi
 
 ## GitHub Copilot CLI
 
-Skill invocation hint: `/ghostwriter`.
+Skill invocation hint: `/conspirator`.
 
 Runtime shape:
 

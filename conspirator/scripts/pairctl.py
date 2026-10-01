@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""pairctl.py - deterministic runtime for the ghostwriter Agent Skill.
+"""pairctl.py - deterministic runtime for the conspirator Agent Skill.
 
 v4 turns the original paired-seat proof of concept into a multi-agent orchestration
 engine with Codex, Cline, and Copilot implementing-seat adapters. The LLMs still reason; this runtime owns the deterministic mechanics:
@@ -972,13 +972,13 @@ def _dispatch_prompt(repo: Path, entry: Dict[str, object], pairctl: Path, agent:
     # Deliberately tiny. Stable policy lives in the installed skill; show --wire carries only
     # this brief's delta context. Each CLI gets its native skill invocation hint.
     invoke = {
-        "codex": "$ghostwriter",
-        "cline": "Use the ghostwriter skill.",
-        "copilot": "/ghostwriter",
+        "codex": "$conspirator",
+        "cline": "Use the conspirator skill.",
+        "copilot": "/conspirator",
     }[agent]
     # Single line, deliberately. On Windows the implementer CLIs are npm .CMD shims
     # (codex.CMD, cline.CMD) and cmd.exe truncates a multi-line argv element at the
-    # first newline, so a multi-line prompt reached the agent as just "$ghostwriter"
+    # first newline, so a multi-line prompt reached the agent as just "$conspirator"
     # with the brief pointer silently dropped. One line on every platform keeps the
     # dispatched prompt identical everywhere.
     return " :: ".join([
@@ -1352,7 +1352,7 @@ def cmd_status(args, console: Console) -> int:
         agent = resolve_implementer(cfg, getattr(args, "implementer", None))
     except PairingError:
         agent = str(cfg.get("implementer") or "codex")
-    console.say("ghostwriter %s" % VERSION)
+    console.say("conspirator %s" % VERSION)
     console.say("  enabled=%s profile=%s protocol=%s max_rounds=%s implementer=%s" %
                 ("ON" if cfg.get("enabled") else "OFF", cfg.get("profile"), cfg.get("protocol"), cfg.get("max_rounds"), agent))
     if agent == "codex": console.say("  codex sandbox=%s" % cfg.get("codex_sandbox"))
@@ -1486,7 +1486,7 @@ def cmd_purge_queue(args, console: Console) -> int:
 # ------------------------------- CLI -------------------------------
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="pairctl.py", description="Multi-agent ghostwriter runtime for Claude, Codex, Cline, and Copilot")
+    parser = argparse.ArgumentParser(prog="pairctl.py", description="Multi-agent conspirator runtime for Claude, Codex, Cline, and Copilot")
     parser.add_argument("--version", action="version", version=VERSION)
     parser.add_argument("--repo"); parser.add_argument("--seat"); parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--profile"); parser.add_argument("--implementer", choices=("auto",) + IMPLEMENTERS)

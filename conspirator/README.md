@@ -1,16 +1,16 @@
 <div align="center">
-  <img src="references/ghostwriter.png" alt="Ghostwriter" width="480" />
+  <img src="references/conspirator.png" alt="Conspirator" width="480" />
 </div>
 
-# Ghostwriter
+# Conspirator
 
 A token-conscious multi-agent pairing engine for **Claude Code, Codex CLI, Cline, and GitHub Copilot CLI**.
 
 ## The Rundown
 
-Ghostwriter is a Claude Code Agent Skill that lets one AI seat (Claude) delegate hands-on implementation work to a second AI seat (Codex, Cline, or GitHub Copilot CLI), then independently audit the result before it is merged (SKILL.md:6-15). Claude is the default auditor/orchestrator; the implementing seat is chosen by config, profile, `--implementer`, or `auto` routing, and the skill explicitly refuses to collapse implementation and independent audit into the same seat when an auditor is available (SKILL.md:8-15).
+Conspirator is a Claude Code Agent Skill that lets one AI seat (Claude) delegate hands-on implementation work to a second AI seat (Codex, Cline, or GitHub Copilot CLI), then independently audit the result before it is merged (SKILL.md:6-15). Claude is the default auditor/orchestrator; the implementing seat is chosen by config, profile, `--implementer`, or `auto` routing, and the skill explicitly refuses to collapse implementation and independent audit into the same seat when an auditor is available (SKILL.md:8-15).
 
-The point of the exercise is cost. Running two AI agents together usually means re-pasting source code, instructions, and history between them on every turn. Ghostwriter replaces that with **CAVEMAN/1 (`CVM1`)**, a compact wire format that sends goals, deltas, acceptance criteria, commands, hashes, and failures instead of essays (SKILL.md:17-27, `references/caveman.md`). The everyday user experience is one sentence:
+The point of the exercise is cost. Running two AI agents together usually means re-pasting source code, instructions, and history between them on every turn. Conspirator replaces that with **CAVEMAN/1 (`CVM1`)**, a compact wire format that sends goals, deltas, acceptance criteria, commands, hashes, and failures instead of essays (SKILL.md:17-27, `references/caveman.md`). The everyday user experience is one sentence:
 
 ```text
 Pair on this.
@@ -22,7 +22,7 @@ Under the hood, `scripts/pairctl.py` (1,522 lines, Python 3.8+, standard library
 
 Coordination state, the task queue, its full history, and the audit trail, lives entirely as a Git commit chain on `refs/pairing/queue` inside the target repository (`references/protocol.md:7-9`, scripts/pairctl.py:403-460). There is no server and no database. Failure handling is bounded and explicit: a fixed number of automatic repair rounds per profile, then a human-visible `blocked` or `max-rounds` state instead of silent infinite retries (`references/protocol.md:21-23`). Landing only happens after an explicit audit pass, with an automatic backup ref and a documented rollback command (SKILL.md:225-239, `references/protocol.md:25-27`).
 
-No user, customer, or business data flows through Ghostwriter. It shells out to locally installed CLIs (`git`, `codex`, `cline`, `copilot`) and does nothing over the network; no HTTP client, SDK, or API-key handling exists anywhere in `scripts/pairctl.py` or `install.py` (verified during this scan). There is no CI configuration, no Dockerfile, and no container/IaC in the repository; distribution is `install.py` copying the skill directory into each tool's skill location (install.py:26-49, 142-196). The closest thing to a contribution gate is `tests/test_smoke.py` (339 lines, standard-library `unittest`), which drives install/uninstall and a full pair/verify/audit/land/rollback cycle against a fake implementing-agent CLI.
+No user, customer, or business data flows through Conspirator. It shells out to locally installed CLIs (`git`, `codex`, `cline`, `copilot`) and does nothing over the network; no HTTP client, SDK, or API-key handling exists anywhere in `scripts/pairctl.py` or `install.py` (verified during this scan). There is no CI configuration, no Dockerfile, and no container/IaC in the repository; distribution is `install.py` copying the skill directory into each tool's skill location (install.py:26-49, 142-196). The closest thing to a contribution gate is `tests/test_smoke.py` (339 lines, standard-library `unittest`), which drives install/uninstall and a full pair/verify/audit/land/rollback cycle against a fake implementing-agent CLI.
 
 Start reading at `SKILL.md` for the agent-facing policy the orchestrating seat follows, then `scripts/pairctl.py` for the actual mechanics, `references/protocol.md` for the lifecycle state machine, and `references/cli.md` for every subcommand.
 
@@ -54,7 +54,7 @@ Start reading at `SKILL.md` for the agent-facing policy the orchestrating seat f
 
 ## Repository Overview
 
-Ghostwriter is a Claude Code Agent Skill (single directory, distributed as-is) that adds multi-agent "paired programming" to Claude Code, Codex CLI, Cline, and GitHub Copilot CLI. Claude acts as the default independent auditor/orchestrator; one of Codex, Cline, or Copilot acts as the implementing seat inside an isolated Git worktree (SKILL.md:1-15). Seat-to-seat traffic uses the compact CAVEMAN/1 wire protocol instead of re-pasting source and history (SKILL.md:17-44). The repository ships the skill definition, the deterministic runtime, per-adapter integration notes, and a standard-library smoke-test suite. Inventory: 88 files total in the working tree, of which 14 are first-party (source, docs, config, and the banner asset), the remainder Git metadata and two generated `__pycache__` artifacts.
+Conspirator is a Claude Code Agent Skill (single directory, distributed as-is) that adds multi-agent "paired programming" to Claude Code, Codex CLI, Cline, and GitHub Copilot CLI. Claude acts as the default independent auditor/orchestrator; one of Codex, Cline, or Copilot acts as the implementing seat inside an isolated Git worktree (SKILL.md:1-15). Seat-to-seat traffic uses the compact CAVEMAN/1 wire protocol instead of re-pasting source and history (SKILL.md:17-44). The repository ships the skill definition, the deterministic runtime, per-adapter integration notes, and a standard-library smoke-test suite. Inventory: 88 files total in the working tree, of which 14 are first-party (source, docs, config, and the banner asset), the remainder Git metadata and two generated `__pycache__` artifacts.
 
 ## Components / Projects / Packages
 
@@ -65,7 +65,7 @@ Ghostwriter is a Claude Code Agent Skill (single directory, distributed as-is) t
 | Installer | Command-line tool | Python 3.8+, stdlib only | `python install.py` | `install.py` | Copies the skill into Claude/Codex/Cline/Copilot skill directories, seeds config (install.py:1-20) |
 | Codex agent descriptor | Configuration | YAML | Read by Codex CLI | `agents/openai.yaml` | Declares display name, default prompt, and invocation policy for Codex's agent registry (agents/openai.yaml) |
 | Reference docs | Documentation | Markdown | Read on demand by the agent | `references/*.md` | Protocol, adapters, CAVEMAN packet format, CLI reference, migration notes (references/) |
-| Banner image | Asset | PNG | N/A | `references/ghostwriter.png` | Skill banner/artwork used in this README |
+| Banner image | Asset | PNG | N/A | `references/conspirator.png` | Skill banner/artwork used in this README |
 | Smoke tests | Test suite | Python 3 `unittest` | `python tests/test_smoke.py` | `tests/test_smoke.py` | End-to-end install and pair/verify/audit/land/rollback coverage (tests/test_smoke.py) |
 
 ## Architecture Overview
@@ -104,7 +104,7 @@ Evidence: SKILL.md:8-15, SKILL.md:128-233, `references/protocol.md:1-27`, script
 ## Project Layout
 
 ```text
-ghostwriter/
+conspirator/
   SKILL.md              - agent-facing policy and workflow (304 lines)
   README.md             - this file
   install.py            - installer for Claude/Codex/Cline/Copilot (225 lines)
@@ -118,7 +118,7 @@ ghostwriter/
     caveman.md              - CAVEMAN/1 wire-format reference
     cli.md                  - full pairctl.py subcommand reference
     migration.md            - migration notes from the prior "pairing.py" tool
-    ghostwriter.png          - banner image used in this README
+    conspirator.png          - banner image used in this README
   tests/
     test_smoke.py           - standard-library end-to-end smoke tests (339 lines)
 ```
@@ -239,7 +239,7 @@ No web or API surface exists in this repository (it is a local CLI tool); the AP
 
 - Persistent state: a Git commit chain on `refs/pairing/queue` inside the target repository being paired on, no external database (`references/protocol.md:7-9`).
 - Local files: `~/.pairing/config.json` (shared config), `~/.pairing/logs/` (full command output), worktrees under `~/.pairing/` by default.
-- External integrations: none over the network. Ghostwriter shells out to locally installed CLIs (`git`, `codex`, `cline`, `copilot`) only; no HTTP client, SDK, or API key handling exists in `scripts/pairctl.py` or `install.py`.
+- External integrations: none over the network. Conspirator shells out to locally installed CLIs (`git`, `codex`, `cline`, `copilot`) only; no HTTP client, SDK, or API key handling exists in `scripts/pairctl.py` or `install.py`.
 
 ## Security Notes
 
@@ -281,7 +281,7 @@ No version tags or release notes exist in the repository at scan time; the queue
 - Changed: the Codex seat can now commit inside a linked worktree.
 - Fixed: `install.py` tolerates read-only files on Windows during reinstall (the `_force_remove` workaround for `.git/objects` permissions, install.py:19-36).
 - Fixed: Windows dispatch, prompt truncation, and verification crashes.
-- Changed: the "pairing" skill was renamed to "ghostwriter" and a generated README was added.
+- Changed: the "pairing" skill was renamed to "conspirator" and a generated README was added.
 
 ## Contributing / Coding Standards
 

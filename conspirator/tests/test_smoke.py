@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""End-to-end standard-library smoke tests for ghostwriter v4."""
+"""End-to-end standard-library smoke tests for conspirator v4."""
 
 import json
 import shutil
@@ -172,19 +172,19 @@ class PairingV4Tests(unittest.TestCase):
 
     def test_install_all_and_protocol(self):
         run([INSTALL, "--target", "all", "--enabled", "on"], env=self.env)
-        self.assertTrue((self.home / ".claude/skills/ghostwriter/SKILL.md").is_file())
-        self.assertTrue((self.home / ".agents/skills/ghostwriter/SKILL.md").is_file())
-        self.assertTrue((self.home / ".cline/skills/ghostwriter/SKILL.md").is_file())
-        self.assertTrue((self.home / ".copilot/skills/ghostwriter/SKILL.md").is_file())
+        self.assertTrue((self.home / ".claude/skills/conspirator/SKILL.md").is_file())
+        self.assertTrue((self.home / ".agents/skills/conspirator/SKILL.md").is_file())
+        self.assertTrue((self.home / ".cline/skills/conspirator/SKILL.md").is_file())
+        self.assertTrue((self.home / ".copilot/skills/conspirator/SKILL.md").is_file())
         tmpl = run([PAIRCTL, "protocol", "brief-template"], env=self.env).stdout
         self.assertIn('"acceptance"', tmpl)
 
     def test_project_install_all(self):
         run([INSTALL, "--target", "all", "--scope", "project", "--project", self.repo], env=self.env)
-        self.assertTrue((self.repo / ".claude/skills/ghostwriter/SKILL.md").is_file())
-        self.assertTrue((self.repo / ".agents/skills/ghostwriter/SKILL.md").is_file())
-        self.assertTrue((self.repo / ".cline/skills/ghostwriter/SKILL.md").is_file())
-        self.assertTrue((self.repo / ".github/skills/ghostwriter/SKILL.md").is_file())
+        self.assertTrue((self.repo / ".claude/skills/conspirator/SKILL.md").is_file())
+        self.assertTrue((self.repo / ".agents/skills/conspirator/SKILL.md").is_file())
+        self.assertTrue((self.repo / ".cline/skills/conspirator/SKILL.md").is_file())
+        self.assertTrue((self.repo / ".github/skills/conspirator/SKILL.md").is_file())
 
     def test_compact_queue_and_events(self):
         run([PAIRCTL, "init", "--repo", self.repo], env=self.env)
@@ -259,7 +259,7 @@ class DispatchStdinTests(unittest.TestCase):
     """Regression: dispatch must never inherit stdin.
 
     codex prints "Reading additional input from stdin..." and blocks waiting for
-    EOF. When ghostwriter spawns it with stdin inherited from a background or
+    EOF. When conspirator spawns it with stdin inherited from a background or
     detached parent whose pipe never closes, the agent waits forever: observed
     burning 5.5 hours of wall time at 0.23s of CPU before it was killed. There is
     no dispatch timeout, so nothing recovers it.
@@ -294,7 +294,7 @@ class LaunchCommandResolutionTests(unittest.TestCase):
         spec = importlib.util.spec_from_file_location("pairctl_under_test", PAIRCTL)
         self.pairctl = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.pairctl)
-        self.bindir = Path(tempfile.mkdtemp(prefix="ghostwriter-bin-"))
+        self.bindir = Path(tempfile.mkdtemp(prefix="conspirator-bin-"))
         self.addCleanup(shutil.rmtree, self.bindir, True)
 
     def _make_tool(self, name):
@@ -330,7 +330,7 @@ class LaunchCommandResolutionTests(unittest.TestCase):
         self.assertEqual(0, proc.returncode)
 
     def test_unresolvable_and_empty_commands_pass_through(self):
-        missing = ["ghostwriter-no-such-tool-xyz", "--flag"]
+        missing = ["conspirator-no-such-tool-xyz", "--flag"]
         self.assertEqual(missing, self.pairctl.resolve_launch_command(list(missing)))
         self.assertEqual([], self.pairctl.resolve_launch_command([]))
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install/uninstall the ghostwriter skill for Claude, Codex, Cline, and Copilot.
+"""Install/uninstall the conspirator skill for Claude, Codex, Cline, and Copilot.
 
 No third-party dependencies. Python 3.8+.
 """
@@ -35,7 +35,7 @@ def _force_remove(path: Path) -> None:
     else:
         shutil.rmtree(path, onerror=lambda f, t, e: on_error(f, t, e))
 
-SKILL_NAME = "ghostwriter"
+SKILL_NAME = "conspirator"
 SOURCE = Path(__file__).resolve().parent
 TARGETS = ("claude", "codex", "cline", "copilot")
 
@@ -162,7 +162,7 @@ def uninstall(destinations: List[Tuple[str, Path]], dry_run: bool) -> int:
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
-        description="Install ghostwriter for Claude Code, Codex, Cline, GitHub Copilot, or all four."
+        description="Install conspirator for Claude Code, Codex, Cline, GitHub Copilot, or all four."
     )
     parser.add_argument("--target", choices=TARGETS + ("both", "all"), default="all",
                         help="both = Claude+Codex; all = Claude+Codex+Cline+Copilot")
@@ -183,7 +183,7 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
 
     if not (SOURCE / "SKILL.md").exists() or not (SOURCE / "scripts" / "pairctl.py").exists():
-        raise InstallError("run install.py from an intact ghostwriter skill directory")
+        raise InstallError("run install.py from an intact conspirator skill directory")
 
     if args.scope == "user":
         destinations = user_destinations(args.target)
@@ -194,7 +194,7 @@ def main(argv=None) -> int:
     if args.uninstall:
         return uninstall(destinations, args.dry_run)
 
-    print("ghostwriter skill v4\n")
+    print("conspirator skill v4\n")
     for label, dest in destinations:
         print("  target: %-7s %s" % (label, dest))
     print()
@@ -205,14 +205,14 @@ def main(argv=None) -> int:
     print("\n  installed")
     chosen = selected_targets(args.target)
     if "claude" in chosen:
-        print("  Claude Code:    /ghostwriter status")
+        print("  Claude Code:    /conspirator status")
     if "codex" in chosen:
-        print("  Codex CLI:      $ghostwriter status")
+        print("  Codex CLI:      $conspirator status")
     if "cline" in chosen:
-        print("  Cline:          ask it to use the ghostwriter skill")
+        print("  Cline:          ask it to use the conspirator skill")
         print("                  (Cline Skills may need to be enabled in Cline settings)")
     if "copilot" in chosen:
-        print("  Copilot CLI:    /ghostwriter status")
+        print("  Copilot CLI:    /conspirator status")
     print("\n  Run: python scripts/pairctl.py doctor")
     return 0
 

@@ -1,9 +1,9 @@
 ---
-name: ghostwriter
-description: Token-efficient multi-agent ghostwriter pairing for Claude Code, Codex CLI, Cline, and GitHub Copilot CLI. Claude is the default independent auditor/orchestrator; Codex, Cline, or Copilot can implement in isolated worktrees. Uses CAVEMAN/1 compact packets, Git-ref queueing, deterministic verification, bounded repair rounds, recovery, audit gates, safe landing, rollback, profiles, and machine-readable history. Use when the user asks to pair agents, delegate implementation, audit implementation work, or manage the pairing runtime.
+name: conspirator
+description: Token-efficient multi-agent conspirator pairing for Claude Code, Codex CLI, Cline, and GitHub Copilot CLI. Claude is the default independent auditor/orchestrator; Codex, Cline, or Copilot can implement in isolated worktrees. Uses CAVEMAN/1 compact packets, Git-ref queueing, deterministic verification, bounded repair rounds, recovery, audit gates, safe landing, rollback, profiles, and machine-readable history. Use when the user asks to pair agents, delegate implementation, audit implementation work, or manage the pairing runtime.
 ---
 
-# Ghostwriter
+# Conspirator
 
 Default topology:
 
