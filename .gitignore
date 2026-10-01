@@ -1,0 +1,17 @@
+bin/
+obj/
+publish/
+.vs/
+.idea/
+*.user
+__pycache__/
+*.pyc
+.env
+*.env.local
+*.db
+*.sqlite
+*.zip
+node_modules/
+.fknrtd/
+Thumbs.db
+desktop.ini

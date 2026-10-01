@@ -1,0 +1,138 @@
+name: tests
+
+# The test suite protects guarantees that break silently: repository
+# non-modification, deterministic ordering, byte-identical packaging, secret
+# redaction and operator privacy. A regression in any of them produces no error
+# message, so the suite has to run on every change rather than when someone
+# remembers.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: ${{ matrix.os }} / Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.13"]
+        include:
+          # The README claims Python 3.8+. Test the floor so the claim stays
+          # true; 3.8 is unavailable on ubuntu-24.04, hence the pinned runner.
+          - os: ubuntu-22.04
+            python: "3.8"
+          - os: ubuntu-latest
+            python: "3.10"
+          - os: ubuntu-latest
+            python: "3.12"
+          # Windows path handling is load-bearing: reserved device names and
+          # forbidden characters are escaped in safe_doc_path.
+          - os: windows-latest
+            python: "3.9"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Confirm no third-party packages are needed
+        shell: bash
+        run: |
+          python -c "import sys; print(sys.version)"
+          test ! -f requirements.txt || (echo 'a dependency manifest appeared; the stdlib-only invariant is broken' && exit 1)
+          test ! -f pyproject.toml   || (echo 'a dependency manifest appeared; the stdlib-only invariant is broken' && exit 1)
+
+      - name: Run the test suite
+        run: python -m unittest discover -s tests -v
+
+  guarantees:
+    name: End-to-end guarantees
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Run odin against this repository
+        # GITHUB_ENV only takes effect in *later* steps, so the artifact root is
+        # exported for this step and written to GITHUB_ENV for the rest.
+        run: |
+          set -euo pipefail
+          export odin_artifact_root="${RUNNER_TEMP}/odin-ci"
+          echo "odin_artifact_root=${odin_artifact_root}" >> "$GITHUB_ENV"
+          python scripts/odin.py init --repo "${GITHUB_WORKSPACE}" \
+            --artifacts "$odin_artifact_root" --network denied --sandbox none
+          python scripts/odin.py env
+          python scripts/odin.py inventory
+          python scripts/odin.py todos
+          python scripts/odin.py secrets
+          python scripts/odin.py readme-scan
+
+      - name: The repository must be unchanged
+        run: |
+          set -euo pipefail
+          python scripts/odin.py verify
+          git diff --exit-code
+          test -z "$(git status --porcelain)" || (echo 'analysis left changes in the working tree' && exit 1)
+          # The toolkit runs from inside the repository here, so this also
+          # proves it writes no bytecode caches into REPO_ROOT.
+          found=$(find . -name __pycache__ -type d -not -path './.git/*' || true)
+          test -z "$found" || (echo "bytecode caches written into REPO_ROOT: $found" && exit 1)
+
+      - name: Packaging must be byte-identical across runs
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, pathlib, subprocess, sys, os
+          art = pathlib.Path(os.environ["odin_artifact_root"])
+          packet = art / "findings"
+          # Minimal packet so packaging can run; content is irrelevant here,
+          # only that identical content yields an identical archive.
+          (packet / "CI_SMOKE.md").write_text("smoke\n", encoding="utf-8", newline="\n")
+          def package():
+              out = subprocess.run([sys.executable, "scripts/odin.py", "package",
+                                    "--artifacts", str(art)],
+                                   capture_output=True, text=True)
+              return json.loads(out.stdout)["zip_sha256"]
+          first, second = package(), package()
+          print("first :", first)
+          print("second:", second)
+          assert first == second, "repackaging identical content was not byte-identical"
+          print("byte-identical packaging: OK")
+          PY
+
+      - name: No secret or operator value may reach the packet
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, pathlib
+          packet = pathlib.Path(os.environ["odin_artifact_root"]) / "findings"
+          env = json.loads((packet / "inventory" / "environment.json").read_text(encoding="utf-8"))
+          for name in ("PATH", "HOME", "USERPROFILE", "TEMP", "TMP"):
+              value = env["environment_variables_sanitized"].get(name)
+              if value is not None:
+                  assert value.startswith("<REDACTED"), (name, value)
+          home = os.environ.get("HOME") or ""
+          raw = (packet / "inventory" / "environment.json").read_text(encoding="utf-8")
+          if len(home) > 3:
+              assert home not in raw, "operator home directory leaked into the packet"
+          print("operator privacy: OK")
+          PY
+
+      - name: README must satisfy the formatting contract
+        run: python scripts/odin.py readme-lint --path README.md

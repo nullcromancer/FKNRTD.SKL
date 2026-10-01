@@ -1,0 +1,4 @@
+# odin generates and expects LF throughout. core.autocrlf must not rewrite these
+# files: the toolkit's determinism guarantees depend on stable line endings.
+* text=auto eol=lf
+*.png binary
