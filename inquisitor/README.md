@@ -1,8 +1,14 @@
-<p align="center"><img src="logo.png" alt="logo" width="160"></p>
+<div align="center">
+<img src="logo.png" alt="inquisitor" width="300">
 
 # inquisitor
 
-An agent skill that grills you about a project, then keeps your answers. It reads the repo, writes a question spec, and builds one self-contained HTML page that autosaves every answer to `answers.md` so the assistant can read it back as the spec. (SKILL.md, scripts/build.py)
+**Ask everything that remains. Keep every answer.**
+
+`read the repo` · `ask sharp questions` · `autosave answers` · `read them back`
+</div>
+
+> **Heads up:** Autosave to disk needs Chrome or Edge. Other browsers keep answers in the browser and download `answers.md` on Finish.
 
 ## The Rundown
 
@@ -18,13 +24,13 @@ You have a project with thirty open decisions and no patience for a chat that as
 
 ## Last Updated
 
-- Last Updated: 2026-10-01
-- Last Commit Date: 2026-10-01 (git evidence, before this README commit)
+- **Last Updated:** 2026-10-01
+- **Last Commit Date:** 2026-10-01T20:56:39-04:00, commit `5bcb5df` on `main` (from a read-only `git log`)
 
 ## Table of Contents
 
-- [The Rundown](#the-rundown)
 - [Last Updated](#last-updated)
+- [The Rundown](#the-rundown)
 - [Repository Overview](#repository-overview)
 - [Components](#components)
 - [Architecture Overview](#architecture-overview)
@@ -40,7 +46,7 @@ You have a project with thirty open decisions and no patience for a chat that as
 - [Observability and Monitoring](#observability-and-monitoring)
 - [Common Tasks and Troubleshooting](#common-tasks-and-troubleshooting)
 - [Change Log](#change-log)
-- [Contributing and Coding Standards](#contributing-and-coding-standards)
+- [Contributing](#contributing)
 - [License](#license)
 
 ## Repository Overview
@@ -202,16 +208,18 @@ None. The save pill in the page header shows the last write time or a failure; w
 
 Versions and dates are not tagged in this repo; entries follow commit order.
 
-### Added
+### Unreleased
+
+#### Added
 
 - Initial skill: spec validator, builder, page template, installer, example, tests.
 - README with logo.
 
-### Changed
+#### Changed
 
 - Template aligned with the original substrate-grill page: missing styles, plain free-text recommendation, "How this works" heading, restore-from-browser status.
 
-## Contributing and Coding Standards
+## Contributing
 
 - Python 3.8+, standard library only. Keep it that way.
 - `.gitattributes` forces `eol=lf`; do not commit CRLF.

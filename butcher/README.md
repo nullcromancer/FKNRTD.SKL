@@ -1,8 +1,14 @@
-<p align="center"><img src="logo.png" alt="logo" width="160"></p>
+<div align="center">
+<img src="logo.png" alt="butcher" width="300">
 
 # butcher
 
-A token-efficiency skill for coding assistants. It cuts repetition, narration and oversized tool output, and never cuts correctness. (SKILL.md)
+**Lean red meat only.**
+
+`cut the fat` · `keep the meat` · `correctness first` · `no ceremony`
+</div>
+
+> **Heads up:** butcher is always on once installed, and it never trades correctness, security or tests for fewer tokens.
 
 ## The Rundown
 
@@ -18,13 +24,13 @@ Butcher is one `SKILL.md` and nothing else. It tells an assistant to maximise us
 
 ## Last Updated
 
-- Last Updated: 2026-10-01
-- Last Commit Date: 2026-10-01 (git evidence, before this README commit)
+- **Last Updated:** 2026-10-01
+- **Last Commit Date:** 2026-10-01T21:02:02-04:00, commit `1404ba1` on `main` (from a read-only `git log`)
 
 ## Table of Contents
 
-- [The Rundown](#the-rundown)
 - [Last Updated](#last-updated)
+- [The Rundown](#the-rundown)
 - [Repository Overview](#repository-overview)
 - [Components](#components)
 - [Architecture Overview](#architecture-overview)
@@ -40,7 +46,7 @@ Butcher is one `SKILL.md` and nothing else. It tells an assistant to maximise us
 - [Observability and Monitoring](#observability-and-monitoring)
 - [Common Tasks and Troubleshooting](#common-tasks-and-troubleshooting)
 - [Change Log](#change-log)
-- [Contributing and Coding Standards](#contributing-and-coding-standards)
+- [Contributing](#contributing)
 - [License](#license)
 
 ## Repository Overview
@@ -130,12 +136,14 @@ None built in. The benchmark section lists the metrics to track when measuring s
 
 No history is recorded in this folder beyond version `1.0.0` in the front matter.
 
-### Added
+### Unreleased
+
+#### Added
 
 - `SKILL.md` 1.0.0.
 - This README.
 
-## Contributing and Coding Standards
+## Contributing
 
 Edit `SKILL.md` directly. Keep rules unambiguous and keep the protected-work list intact. Reinstall to every assistant's skills folder after a change so copies do not drift.
 

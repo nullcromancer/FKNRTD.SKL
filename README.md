@@ -1,8 +1,14 @@
-<p align="center"><img src="logo.png" alt="logo" width="200"></p>
+<div align="center">
+<img src="logo.png" alt="FKNRTD.SKL" width="300">
 
 # FKNRTD.SKL
 
-The source for the agent skills nullcromancer develops. Five skills, one repo, installed into Claude Code, Codex, Cline and Copilot CLI so they stop drifting apart.
+**The agent skills nullcromancer ships.**
+
+`five skills` · `one repo` · `four assistants` · `no drift`
+</div>
+
+> **Heads up:** Each skill is independent. Pick the folder you need and start with its `SKILL.md`.
 
 ## The Rundown
 
@@ -22,13 +28,13 @@ The skills are independent. There is no shared library, no top-level build and n
 
 ## Last Updated
 
-- Last Updated: 2026-10-01
-- Last Commit Date: 2026-10-01 (git evidence, before this README commit)
+- **Last Updated:** 2026-10-01
+- **Last Commit Date:** 2026-10-01T21:02:02-04:00, commit `1404ba1` on `main` (from a read-only `git log`)
 
 ## Table of Contents
 
-- [The Rundown](#the-rundown)
 - [Last Updated](#last-updated)
+- [The Rundown](#the-rundown)
 - [Repository Overview](#repository-overview)
 - [Components](#components)
 - [Architecture Overview](#architecture-overview)
@@ -44,7 +50,7 @@ The skills are independent. There is no shared library, no top-level build and n
 - [Observability and Monitoring](#observability-and-monitoring)
 - [Common Tasks and Troubleshooting](#common-tasks-and-troubleshooting)
 - [Change Log](#change-log)
-- [Contributing and Coding Standards](#contributing-and-coding-standards)
+- [Contributing](#contributing)
 - [License](#license)
 
 ## Repository Overview
@@ -179,17 +185,19 @@ None at repo level. Skills report through their own CLI output and files.
 
 Versions and dates are not tagged at repo level; entries follow commit order.
 
-### Added
+### Unreleased
+
+#### Added
 
 - `butcher`, `conspirator`, `odin`, `vault` skills.
 - `inquisitor` skill, imported with history.
 - This README.
 
-### Changed
+#### Changed
 
 - `ghostwriter` renamed to `conspirator`.
 
-## Contributing and Coding Standards
+## Contributing
 
 - Python 3.8+, standard library only unless a skill already declares dependencies.
 - Keep attribution as nullcromancer.

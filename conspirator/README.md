@@ -1,10 +1,14 @@
 <div align="center">
-  <img src="references/conspirator.png" alt="Conspirator" width="480" />
-</div>
+<img src="references/conspirator.png" alt="Conspirator" width="300">
 
 # Conspirator
 
-A token-conscious multi-agent pairing engine for **Claude Code, Codex CLI, Cline, and GitHub Copilot CLI**.
+**Two AI seats, one audit trail.**
+
+`delegate` · `audit independently` · `pass compact packets` · `land safely`
+</div>
+
+> **Heads up:** A token-conscious multi-agent pairing engine for **Claude Code, Codex CLI, Cline, and GitHub Copilot CLI**.
 
 ## The Rundown
 
@@ -28,14 +32,15 @@ Start reading at `SKILL.md` for the agent-facing policy the orchestrating seat f
 
 ## Last Updated
 
-- Last Updated: 2026-09-15
-- Last Commit Date: 2026-09-15 (git log, commit `6b2ff8a`)
+- **Last Updated:** 2026-10-01
+- **Last Commit Date:** 2026-10-01T16:56:43-04:00, commit `589226c` on `main` (from a read-only `git log`)
 
 ## Table of Contents
 
+- [Last Updated](#last-updated)
 - [The Rundown](#the-rundown)
 - [Repository Overview](#repository-overview)
-- [Components / Projects / Packages](#components-projects-packages)
+- [Components](#components)
 - [Architecture Overview](#architecture-overview)
 - [Tech Stack and Dependencies](#tech-stack-and-dependencies)
 - [Project Layout](#project-layout)
@@ -43,20 +48,20 @@ Start reading at `SKILL.md` for the agent-facing policy the orchestrating seat f
 - [Configuration](#configuration)
 - [Running the System](#running-the-system)
 - [Deployment and CI/CD](#deployment-and-cicd)
-- [Deep Code Reference (Wiki Section)](#deep-code-reference-wiki-section)
+- [Deep Code Reference](#deep-code-reference)
 - [Data and Integrations](#data-and-integrations)
 - [Security Notes](#security-notes)
 - [Observability and Monitoring](#observability-and-monitoring)
 - [Common Tasks and Troubleshooting](#common-tasks-and-troubleshooting)
 - [Change Log](#change-log)
-- [Contributing / Coding Standards](#contributing-coding-standards)
+- [Contributing](#contributing)
 - [License](#license)
 
 ## Repository Overview
 
 Conspirator is a Claude Code Agent Skill (single directory, distributed as-is) that adds multi-agent "paired programming" to Claude Code, Codex CLI, Cline, and GitHub Copilot CLI. Claude acts as the default independent auditor/orchestrator; one of Codex, Cline, or Copilot acts as the implementing seat inside an isolated Git worktree (SKILL.md:1-15). Seat-to-seat traffic uses the compact CAVEMAN/1 wire protocol instead of re-pasting source and history (SKILL.md:17-44). The repository ships the skill definition, the deterministic runtime, per-adapter integration notes, and a standard-library smoke-test suite. Inventory: 88 files total in the working tree, of which 14 are first-party (source, docs, config, and the banner asset), the remainder Git metadata and two generated `__pycache__` artifacts.
 
-## Components / Projects / Packages
+## Components
 
 | Component | Type | Language/Framework | Runtime/Target | Path | Purpose |
 | --- | --- | --- | --- | --- | --- |
@@ -216,7 +221,7 @@ Uninstall removes only the installed skill copies; shared config, logs, worktree
 
 Insufficient Evidence for a deployment pipeline: the repository contains no CI configuration, no Dockerfile, and no container/IaC definitions or publish/release scripts. Distribution is manual: a user or agent runs `install.py` to copy the skill directory into a target CLI's skill location (install.py:47-70, 163-217).
 
-## Deep Code Reference (Wiki Section)
+## Deep Code Reference
 
 ### Cross-Reference Index
 
@@ -283,7 +288,11 @@ No version tags or release notes exist in the repository at scan time; the queue
 - Fixed: Windows dispatch, prompt truncation, and verification crashes.
 - Changed: the "pairing" skill was renamed to "conspirator" and a generated README was added.
 
-## Contributing / Coding Standards
+### Unreleased
+
+
+
+## Contributing
 
 - No `CONTRIBUTING.md`, linter configuration, or formatter configuration was found in the repository during this scan.
 - The codebase is standard-library-only Python; `scripts/pairctl.py` and `install.py` use `from __future__ import annotations` and full type hints on function signatures throughout.
