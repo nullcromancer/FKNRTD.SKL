@@ -1,0 +1,24 @@
+{
+  "title": "Example: choosing a storage engine",
+  "subtitle": "A tiny spec showing every feature. Replace it with the real project.",
+  "contextTitle": "What I found",
+  "context": [
+    {"heading": "What is real", "items": ["The service stores events in `events.db` (SQLite), per `README.md`."]},
+    {"heading": "Where the goal fights your rules", "kind": "tension", "items": ["You want multi-writer replication, but `AGENTS.md` says single-writer, no network."]}
+  ],
+  "contextNote": "Nothing was run; figures come from the README.",
+  "sections": [{"id": "A", "title": "Storage: where data lives", "blurb": "Decisions that gate the schema."}],
+  "questions": [
+    {"id": "A1", "section": "A", "priority": "blocker", "text": "Which engine is the system of record?",
+     "why": "`events.db` is SQLite today.",
+     "options": [
+       {"label": "Stay on SQLite", "detail": "No new dependency.", "recommended": true},
+       {"label": "Move to Postgres", "detail": "Needs a server."}],
+     "recommendation": "Single writer is a stated invariant; SQLite satisfies it.",
+     "freeText": "Anything else?"},
+    {"id": "A2", "section": "A", "priority": "important", "multi": true, "text": "Which data must be exportable?",
+     "options": [{"label": "Events", "recommended": true}, {"label": "Projections"}, {"label": "Logs"}],
+     "recommendation": "Events are the source of truth; projections rebuild from them."},
+    {"id": "A3", "section": "A", "priority": "later", "text": "What would make you distrust this?", "freeText": "Describe it"}
+  ]
+}
