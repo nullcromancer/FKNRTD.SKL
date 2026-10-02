@@ -70,7 +70,7 @@ Conspirator is a Claude Code Agent Skill (single directory, distributed as-is) t
 | Installer | Command-line tool | Python 3.8+, stdlib only | `python install.py` | `install.py` | Copies the skill into Claude/Codex/Cline/Copilot skill directories, seeds config (install.py:1-20) |
 | Codex agent descriptor | Configuration | YAML | Read by Codex CLI | `agents/openai.yaml` | Declares display name, default prompt, and invocation policy for Codex's agent registry (agents/openai.yaml) |
 | Reference docs | Documentation | Markdown | Read on demand by the agent | `references/*.md` | Protocol, adapters, CAVEMAN packet format, CLI reference, migration notes (references/) |
-| Banner image | Asset | PNG | N/A | `references/conspirator.png` | Skill banner/artwork used in this README |
+| Logo | Asset | PNG | N/A | `logo.png` | Shared odin logo used in this README |
 | Smoke tests | Test suite | Python 3 `unittest` | `python tests/test_smoke.py` | `tests/test_smoke.py` | End-to-end install and pair/verify/audit/land/rollback coverage (tests/test_smoke.py) |
 
 ## Architecture Overview
@@ -123,7 +123,7 @@ conspirator/
     caveman.md              - CAVEMAN/1 wire-format reference
     cli.md                  - full pairctl.py subcommand reference
     migration.md            - migration notes from the prior "pairing.py" tool
-    conspirator.png          - banner image used in this README
+    (logo.png is at the skill root; conspirator.png is no longer used by this README)
   tests/
     test_smoke.py           - standard-library end-to-end smoke tests (339 lines)
 ```
