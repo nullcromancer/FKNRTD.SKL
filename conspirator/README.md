@@ -1,5 +1,5 @@
 <div align="center">
-<img src="references/conspirator.png" alt="Conspirator" width="300">
+<img src="logo.png" alt="Conspirator" width="300">
 
 # Conspirator
 
