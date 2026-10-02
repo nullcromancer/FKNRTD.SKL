@@ -20,7 +20,6 @@ Each folder is a self-contained skill: a `SKILL.md` that tells an assistant what
 | `conspirator` | Multi-agent pairing: Claude audits, Codex/Cline/Copilot implement in isolated worktrees, talking in compact packets. |
 | `inquisitor` | Grills you with a questionnaire page that autosaves answers to `answers.md`, then reads them back as the spec. |
 | `odin` | Read-only repository forensics and documentation: evidence packet, README, docs site, developer handoff. |
-| `vault` (null-vault) | Photo-to-inventory cataloging engine backed by SQLite: identify, research, value, export. |
 
 The skills are independent. There is no shared library, no top-level build and no CI in this repo. Start with the skill you want and read its `SKILL.md`.
 
@@ -65,7 +64,6 @@ A multi-component repo: 5 skill folders, about 400 files. The repo root holds on
 | conspirator | Skill + runtime | Python (stdlib) | Python 3.8+ | `conspirator/` (`scripts/pairctl.py`, `install.py`) | Pair two AI seats with Git-ref queueing and audit gates |
 | inquisitor | Skill + builder | Python (stdlib), vanilla JS | Python 3.8+, Chrome/Edge for autosave | `inquisitor/` (`scripts/build.py`, `assets/template.html`) | Questionnaire page that writes `answers.md` |
 | odin | Skill + toolkit | Python (stdlib) | Python 3.8+ | `odin/` (`scripts/odin.py`, `scripts/odin_lib/`, `install/`) | Deterministic repo forensics and documentation |
-| vault | Skill + CLI engine | Python package | See `vault/pyproject.toml` | `vault/` (`null_vault/`, `scripts/vault.py`, `install.py`) | Photo inventory with SQLite as source of truth |
 
 ## Architecture Overview
 
@@ -76,7 +74,6 @@ flowchart LR
     C[conspirator]
     I[inquisitor]
     O[odin]
-    V[vault]
   end
   repo -->|install.py / install scripts| S1[~/.claude/skills]
   repo --> S2[~/.agents/skills]
@@ -92,9 +89,8 @@ There is no runtime coupling between skills. The only shared thing is the instal
 | --- | --- |
 | Language | Python 3.8+ for every skill with code; Markdown for skill definitions |
 | Frontend | Vanilla JS in `inquisitor/assets/template.html`, no network |
-| Datastore | SQLite inside `vault` only |
 | Test frameworks | `unittest` and `pytest` (odin readme-scan also saw Playwright references) |
-| Repo-level manifests | None. Dependencies, where any exist, are declared per skill (see `vault/pyproject.toml`) |
+| Repo-level manifests | None. Dependencies, where any exist, are declared per skill |
 
 ## Project Layout
 
@@ -103,7 +99,6 @@ There is no runtime coupling between skills. The only shared thing is the instal
   - conspirator/    SKILL.md, README.md, agents/, references/, scripts/pairctl.py, tests/, install.py
   - inquisitor/     SKILL.md, README.md, assets/, examples/, scripts/build.py, tests/, install.py
   - odin/           SKILL.md, README.md, PROTOCOL.md, AGENTS.md, scripts/, reference/, templates/, prompts/, install/, tests/, LICENSE
-  - vault/          SKILL.md, README.md, AGENTS.md, CLAUDE.md, null_vault/, scripts/, schemas/, docs/, agents/, tests/, install.py
   - .gitattributes
   - .gitignore
 ```
@@ -120,7 +115,6 @@ Then install the skill you want:
 ```
 python conspirator/install.py
 python inquisitor/install.py
-python vault/install.py
 odin/install/install.sh        # or odin/install/install.ps1 on Windows
 ```
 
@@ -153,19 +147,17 @@ Insufficient Evidence of CI/CD. Searched for `.github/workflows`, pipeline files
 | conspirator | `conspirator/scripts/pairctl.py` | `conspirator/tests/test_smoke.py` |
 | inquisitor | `inquisitor/scripts/build.py`, `inquisitor/install.py` | `inquisitor/tests/test_build.py` |
 | odin | `odin/scripts/odin.py`, `odin/scripts/odin_lib/` | `odin/tests/test_odin.py` |
-| vault | `vault/scripts/vault.py`, `vault/null_vault/` | `vault/tests/` (agent protocol, db, image pipeline, maintenance and privacy, scanner, valuation) |
 
 Each skill's own README holds the detailed symbol index. This README does not repeat it.
 
 ## Data and Integrations
 
-Only `vault` keeps data (a SQLite inventory). `conspirator` keeps queue state as a Git commit chain inside the target repository, not here. `odin` writes artifacts outside the repo it analyses. `inquisitor` writes `answers.md` into the working folder of whoever runs it.
+`conspirator` keeps queue state as a Git commit chain inside the target repository, not here. `odin` writes artifacts outside the repo it analyses. `inquisitor` writes `answers.md` into the working folder of whoever runs it.
 
 ## Security Notes
 
 - `.gitignore` excludes `.env`, `*.env.local`, `*.db`, `*.sqlite`, `*.zip` and `.fknrtd/`, so local databases, secrets and odin packets stay out of the repo.
 - `odin` is read-only toward the repo it analyses and never exposes secret values (`odin/SKILL.md`).
-- `vault` is designed to leave source photos untouched and strip GPS EXIF from normalized images (`vault/README.md`).
 - No security scan was run for this README. Insufficient Evidence beyond the static reading above.
 
 ## Observability and Monitoring
@@ -189,7 +181,7 @@ Versions and dates are not tagged at repo level; entries follow commit order.
 
 #### Added
 
-- `butcher`, `conspirator`, `odin`, `vault` skills.
+- `butcher`, `conspirator`, `odin` skills.
 - `inquisitor` skill, imported with history.
 - This README.
 

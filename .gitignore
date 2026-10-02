@@ -15,3 +15,6 @@ node_modules/
 .fknrtd/
 Thumbs.db
 desktop.ini
+
+# Private skill, kept local only
+/vault/
