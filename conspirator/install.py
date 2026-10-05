@@ -37,7 +37,7 @@ def _force_remove(path: Path) -> None:
 
 SKILL_NAME = "conspirator"
 SOURCE = Path(__file__).resolve().parent
-TARGETS = ("claude", "codex", "cline", "copilot")
+TARGETS = ("claude", "codex", "cline", "copilot", "lmstudio")
 
 
 class InstallError(Exception):
@@ -92,6 +92,8 @@ def user_destinations(target: str) -> List[Tuple[str, Path]]:
         elif name == "copilot":
             root = Path(os.environ.get("COPILOT_HOME") or (Path.home() / ".copilot"))
             out.append((name, root / "skills" / SKILL_NAME))
+        elif name == "lmstudio":
+            out.append((name, Path.home() / ".lmstudio" / "skills" / SKILL_NAME))
     return out
 
 

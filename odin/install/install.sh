@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install the odin skill for Claude Code and/or Codex.
+# Install the odin skill for Claude Code, Codex and/or LM Studio.
 #
 #   ./install.sh                       # every CLI detected
 #   ./install.sh --target claude       # Claude Code only
@@ -81,6 +81,15 @@ if [ "$TARGET" = "all" ] || [ "$TARGET" = "codex" ]; then
     sed "s|{{odin_dir}}|$DEST|g" "$SKILL_ROOT/prompts/odin.md" > "$PROMPT"
     INSTALLED+=("Codex prompt: $PROMPT")
     echo "  prompt installed. Invoke with /odin"
+  fi
+fi
+
+if [ "$TARGET" = "all" ] || [ "$TARGET" = "lmstudio" ]; then
+  # LM Studio has a user-level skills folder only; project scope is ignored.
+  DEST="$HOME/.lmstudio/skills/$SKILL_NAME"
+  echo "LM Studio -> $DEST"
+  if copy_skill "$DEST"; then
+    INSTALLED+=("LM Studio: $DEST")
   fi
 fi
 

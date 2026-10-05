@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Install or remove the inquisitor skill for Claude Code, Codex, Cline and Copilot CLI.
+"""Install or remove the inquisitor skill for Claude Code, Codex, Cline, Copilot CLI and LM Studio.
 
 Resolves its source from its own location. Re-running replaces the installed copy, so
 installed copies never drift from this folder. Python 3.8+, standard library only.
 
-  python install.py                 install for all four, user scope
+  python install.py                 install for all five, user scope
   python install.py --target claude
   python install.py --scope project --project path/to/repo
   python install.py --uninstall
@@ -21,7 +21,7 @@ from pathlib import Path
 
 NAME = "inquisitor"
 SOURCE = Path(__file__).resolve().parent
-TARGETS = ("claude", "codex", "cline", "copilot")
+TARGETS = ("claude", "codex", "cline", "copilot", "lmstudio")
 IGNORE = shutil.ignore_patterns(".git", "__pycache__", "*.pyc", ".DS_Store", "*.installing", "*.previous")
 
 
@@ -46,10 +46,14 @@ def user_dest(target: str) -> Path:
         return home / ".agents" / "skills" / NAME
     if target == "cline":
         return home / ".cline" / "skills" / NAME
+    if target == "lmstudio":
+        return home / ".lmstudio" / "skills" / NAME
     return Path(os.environ.get("COPILOT_HOME") or home / ".copilot") / "skills" / NAME
 
 
 def project_dest(target: str, project: Path) -> Path:
+    if target == "lmstudio":
+        return None  # LM Studio has a user-level skills folder only
     sub = {"claude": ".claude/skills", "codex": ".agents/skills", "cline": ".cline/skills", "copilot": ".github/skills"}[target]
     return project / sub / NAME
 
@@ -93,6 +97,9 @@ def main(argv=None) -> int:
     project = Path(a.project or Path.cwd()).resolve()
     dests = [(t, user_dest(t) if a.scope == "user" else project_dest(t, project)) for t in chosen]
     for _t, d in dests:
+        if d is None:
+            print("  skip    -> %s has no project scope" % _t)
+            continue
         if a.uninstall:
             print("  remove  -> %s" % d)
             if d.exists() and not a.dry_run:

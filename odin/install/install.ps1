@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Install the odin skill for Claude Code and/or Codex.
+    Install the odin skill for Claude Code, Codex and/or LM Studio.
 
 .EXAMPLE
     ./install.ps1                      # install for every CLI detected
@@ -10,7 +10,7 @@
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('all', 'claude', 'codex')]
+    [ValidateSet('all', 'claude', 'codex', 'lmstudio')]
     [string]$Target = 'all',
 
     [ValidateSet('user', 'project')]
@@ -99,6 +99,15 @@ if ($Target -in @('all', 'codex')) {
         Set-Content -Path $promptFile -Value $body -Encoding utf8 -NoNewline
         $installed += "Codex prompt: $promptFile"
         Write-Host "  prompt installed. Invoke with /odin"
+    }
+}
+
+if ($Target -in @('all', 'lmstudio')) {
+    # LM Studio has a user-level skills folder only; project scope is ignored.
+    $dest = Join-Path $UserHome ".lmstudio/skills/$SkillName"
+    Write-Host "LM Studio -> $dest"
+    if (Copy-Skill -Destination $dest) {
+        $installed += "LM Studio: $dest"
     }
 }
 
