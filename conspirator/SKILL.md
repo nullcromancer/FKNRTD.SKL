@@ -238,6 +238,25 @@ Undo a landed merge without rewriting history:
 python <skill-dir>/scripts/pairctl.py rollback <id> --repo <repo> --seat claude
 ```
 
+## Swarm
+
+When the user says **swarm** (or "swarm this"), Claude, Codex and whatever model LM Studio has loaded attack one project together:
+
+1. Claude reads the repo and splits the goal into **disjoint slices**, one brief per seat (`codex`, `lmstudio`), each with `files` (required; overlapping paths are rejected), `acceptance`, `scope`, `tests`. Give the riskier slice to Codex. Write the spec outside the repo:
+
+```json
+{"goal": "...", "briefs": [
+  {"seat": "codex", "title": "...", "goal": "...", "scope": ["..."], "files": ["src/a"], "acceptance": ["..."], "tests": ["..."]},
+  {"seat": "lmstudio", "title": "...", "goal": "...", "scope": ["..."], "files": ["src/b"], "acceptance": ["..."]}]}
+```
+
+2. `python <skill-dir>/scripts/pairctl.py swarm "title" --spec swarm.json --repo <repo>` creates every brief, auto-detects the loaded LM Studio model (`lms ps`, then `/v1/models`) reloads LM Studio at the model's maximum context if it is lower (mandatory for every LM Studio run), and runs all seats in parallel worktrees with verification and bounded repair. Each slice ends `reported` (AUDIT-READY).
+3. Claude independently audits **every** slice exactly as in section 7 (`pairctl verify <id>`, read the diff, `audit --seat claude`). Seats cannot audit, land, rollback or swarm: dispatch sets `PAIRCTL_IMPLEMENTER_SEAT`.
+4. `pairctl swarm --land <swarm-id> --repo <repo>` lands the audit-passed slices in order, stops on a merge conflict, then runs verification on main. `swarm --status <swarm-id>` lists the slices. The swarm id is the first brief's id.
+
+**Takeover.** If a slice ends `blocked` (its seat kept failing), Claude becomes its implementer:
+`swarm --takeover <brief-id>` reassigns it to `claude` on the failed seat's branch and worktree. Claude fixes and commits there, `report --seat claude`, then `verify <id>`, then `swarm --review <id> [--reviewer codex|lmstudio]` (a different seat reviews read-only and must end with `REVIEW: PASS`). `audit --verdict pass` on a taken-over slice is refused until both verification and review have passed after the takeover (`--force` overrides). Tell the user which slices were self-implemented.
+
 ## 9. Recovery
 
 Inspect an interrupted round:

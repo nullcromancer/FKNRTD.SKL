@@ -88,3 +88,15 @@ protocol stats --file packet.cvm
 ```
 
 `stats` reports character/word/line proxies. It intentionally does not claim an exact tokenizer count.
+
+## Swarm
+
+```text
+swarm "title" --spec swarm.json     run all slices in parallel (one brief per seat; files required, no overlap)
+swarm --status <swarm-id>           table of the swarm's slices
+swarm --land <swarm-id>             land audit-passed slices in order, then verify main
+swarm --takeover <brief-id>         Claude becomes implementer of a blocked slice (self_implemented)
+swarm --review <brief-id> [--reviewer codex|lmstudio]   read-only cross-seat review; required before audit of a takeover
+```
+
+Config: `lmstudio_use_lms` (default true; false skips `lms ps` and uses `/v1/models`).

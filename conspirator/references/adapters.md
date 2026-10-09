@@ -85,3 +85,23 @@ Whichever implementer is selected:
 - it reports via `pairctl report --seat <agent>`;
 - deterministic verification runs before the independent semantic audit;
 - audit failures re-use the same branch/worktree and send only the latest failure delta.
+
+## LM Studio (Claude Code, local model)
+
+`--implementer lmstudio` runs `claude -p` with `ANTHROPIC_BASE_URL` pointed at LM Studio's
+Anthropic-compatible `/v1/messages` endpoint. No Cline. Dispatch runs with cwd = the worktree and
+sets `PAIRCTL_IMPLEMENTER_SEAT`, which makes `audit`, `land` and `rollback` refuse to run
+(the local model otherwise audits and lands its own work).
+
+```text
+implementer=lmstudio
+lmstudio_command=claude
+lmstudio_url=http://127.0.0.1:1234
+lmstudio_model=qwen3-coder-next     # must match the identifier in `lms ps`
+lmstudio_extra_args=[]
+```
+
+Load the model first: `lms load qwen/qwen3-coder-next -c 262144 --identifier qwen3-coder-next --parallel 1 -y`
+(262144 is the model's maximum; Claude Code's prompt alone is ~18k tokens). Not in the default `auto` priority.
+
+**Maximum context is mandatory.** Before every LM Studio dispatch, review and swarm, `ensure_lmstudio_max_context` checks the loaded model (`lms ps --json`), and if its context is below the model's `maxContextLength` it reloads at the maximum, stepping down x0.75 only when the machine cannot hold that. Skipped when `lms` is absent or `lmstudio_use_lms=false`.
