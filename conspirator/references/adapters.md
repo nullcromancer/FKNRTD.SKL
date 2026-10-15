@@ -86,6 +86,12 @@ Whichever implementer is selected:
 - deterministic verification runs before the independent semantic audit;
 - audit failures re-use the same branch/worktree and send only the latest failure delta.
 
+## Strata (Claude Code, local Strata server)
+
+`--implementer strata` runs Claude Code through Strata's own `strata_agent.py`. The configuration is
+read live from the Strata install on every run (`pairctl strata`). Standalone: it does not use any
+LM Studio code, shim or setting. Full details: `references/strata.md`.
+
 ## LM Studio (Claude Code, local model)
 
 `--implementer lmstudio` runs `claude -p` with `ANTHROPIC_BASE_URL` pointed at LM Studio's

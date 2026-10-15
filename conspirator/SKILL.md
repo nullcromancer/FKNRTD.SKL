@@ -85,6 +85,8 @@ Supported adapters:
 codex
 cline
 copilot
+lmstudio
+strata
 auto
 ```
 
@@ -97,6 +99,17 @@ python <skill-dir>/scripts/pairctl.py config implementer
 A user request naming an implementer overrides config for that run. Otherwise use the active profile/config. `auto` selects the first installed supported CLI according to `implementer_priority`; it does not guess at live provider pricing.
 
 Adapter details live in `references/adapters.md`.
+
+### Strata as co-programmer
+
+When the user wants **Strata** as the co-programmer (or "pair on this using Strata"), use `--implementer strata`.
+
+- Run `python <skill-dir>/scripts/pairctl.py strata` first. It reads the configuration from the Strata install every time (launcher, model, engine args, what `/health` reports), so it is always current. Never quote Strata settings from memory or from older notes; quote this output.
+- Fix any `PROBLEM` line before dispatching; dispatch refuses while one exists.
+- Strata is standalone: never apply LM Studio, `lmstudio` seat, shim, `lms` or bionic settings or lessons to it.
+- Change Strata only through its own install (its `strata-*.json`, `run-*.bat`, `strata-up.ps1`); conspirator follows automatically. Only `strata_home` is stored in conspirator config.
+
+Details and the current snapshot: `references/strata.md`.
 
 ## 3. Decide whether pairing is worth its cost
 
@@ -250,12 +263,12 @@ When the user says **swarm** (or "swarm this"), Claude, Codex and whatever model
   {"seat": "lmstudio", "title": "...", "goal": "...", "scope": ["..."], "files": ["src/b"], "acceptance": ["..."]}]}
 ```
 
-2. `python <skill-dir>/scripts/pairctl.py swarm "title" --spec swarm.json --repo <repo>` creates every brief, auto-detects the loaded LM Studio model (`lms ps`, then `/v1/models`) reloads LM Studio at the model's maximum context if it is lower (mandatory for every LM Studio run), and runs all seats in parallel worktrees with verification and bounded repair. Each slice ends `reported` (AUDIT-READY).
+2. `python <skill-dir>/scripts/pairctl.py swarm "title" --spec swarm.json --repo <repo>` creates every brief, auto-detects the loaded LM Studio model (`lms ps`, then `/v1/models`) reloads LM Studio at the model's maximum context if it is lower (mandatory for every LM Studio run), and runs all seats in parallel worktrees with verification and bounded repair. Each slice ends `reported` (AUDIT-READY). A slice may also use `"seat": "strata"`; its live configuration is checked first (see "Strata as co-programmer").
 3. Claude independently audits **every** slice exactly as in section 7 (`pairctl verify <id>`, read the diff, `audit --seat claude`). Seats cannot audit, land, rollback or swarm: dispatch sets `PAIRCTL_IMPLEMENTER_SEAT`.
 4. `pairctl swarm --land <swarm-id> --repo <repo>` lands the audit-passed slices in order, stops on a merge conflict, then runs verification on main. `swarm --status <swarm-id>` lists the slices. The swarm id is the first brief's id.
 
 **Takeover.** If a slice ends `blocked` (its seat kept failing), Claude becomes its implementer:
-`swarm --takeover <brief-id>` reassigns it to `claude` on the failed seat's branch and worktree. Claude fixes and commits there, `report --seat claude`, then `verify <id>`, then `swarm --review <id> [--reviewer codex|lmstudio]` (a different seat reviews read-only and must end with `REVIEW: PASS`). `audit --verdict pass` on a taken-over slice is refused until both verification and review have passed after the takeover (`--force` overrides). Tell the user which slices were self-implemented.
+`swarm --takeover <brief-id>` reassigns it to `claude` on the failed seat's branch and worktree. Claude fixes and commits there, `report --seat claude`, then `verify <id>`, then `swarm --review <id> [--reviewer codex|lmstudio|strata]` (a different seat reviews read-only and must end with `REVIEW: PASS`). `audit --verdict pass` on a taken-over slice is refused until both verification and review have passed after the takeover (`--force` overrides). Tell the user which slices were self-implemented.
 
 ## 9. Recovery
 

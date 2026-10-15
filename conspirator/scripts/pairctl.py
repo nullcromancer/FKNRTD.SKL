@@ -45,7 +45,7 @@ CONFIG_DIR = Path(os.environ.get("PAIRING_HOME") or (Path.home() / ".pairing"))
 CONFIG_FILE = CONFIG_DIR / "config.json"
 NEWLINE = "\n"
 PROTOCOL = "caveman-v1"
-IMPLEMENTERS = ("codex", "cline", "copilot", "lmstudio")
+IMPLEMENTERS = ("codex", "cline", "copilot", "lmstudio", "strata")
 
 BUILTIN_PROFILES = {
     "fast": {
@@ -112,6 +112,12 @@ DEFAULT_CONFIG = {
     "lmstudio_url": "http://127.0.0.1:1234",
     "lmstudio_model": "qwen3-coder-next",
     "lmstudio_extra_args": [],
+    # Strata is its own seat and shares nothing with lmstudio: no shim, no lms, no LM Studio settings.
+    # Only the install location is stored here; the model, launcher and engine settings are read live
+    # from that install on every run (see strata_live), so they can never go stale.
+    "strata_home": r"C:\DEV\GIT\Strata",
+    "strata_command": "claude",
+    "strata_extra_args": [],
     "dispatch_output": "log",
     "profile": "standard",
     "max_rounds": 2,
@@ -295,6 +301,8 @@ def implementer_command_name(agent: str, cfg: Dict[str, object]) -> str:
         return str(cfg.get("copilot_command") or "copilot")
     if agent == "lmstudio":
         return str(cfg.get("lmstudio_command") or "claude")
+    if agent == "strata":
+        return str(cfg.get("strata_command") or "claude")  # strata_agent.py wraps this CLI
     raise PairingError("unknown implementer %r" % agent)
 
 
@@ -1071,6 +1079,7 @@ def _dispatch_prompt(repo: Path, entry: Dict[str, object], pairctl: Path, agent:
         "cline": "Use the conspirator skill.",
         "copilot": "/conspirator",
         "lmstudio": "Use the conspirator skill.",
+        "strata": "Use the conspirator skill.",
     }[agent]
     # Single line, deliberately. On Windows the implementer CLIs are npm .CMD shims
     # (codex.CMD, cline.CMD) and cmd.exe truncates a multi-line argv element at the
@@ -1141,6 +1150,20 @@ def build_dispatch_command(agent: str, cfg: Dict[str, object], wt: Path, prompt:
             if git_dir.exists() and Path(wt).resolve() != Path(main).resolve():
                 cmd += ["--add-dir", str(git_dir)]
         return cmd + extra
+    if agent == "strata":
+        # Claude Code through Strata's own launcher, which starts/warms the server, keeps the PC awake
+        # and sets ANTHROPIC_* for the local server. The model is whatever that install is set up for.
+        agent_py = Path(str(cfg.get("strata_home") or "")) / "strata_agent.py"
+        extra = list(cfg.get("strata_extra_args") or [])
+        cmd = [sys.executable, str(agent_py), "-p", prompt, "--output-format", "json"]
+        if review:
+            return cmd + ["--allowedTools", "Read,Glob,Grep,Bash(git diff:*),Bash(git log:*),Bash(git show:*)"] + extra
+        cmd += ["--permission-mode", "acceptEdits", "--allowedTools", "Bash,Read,Edit,Write,Glob,Grep"]
+        if main is not None:
+            git_dir = Path(main) / ".git"
+            if git_dir.exists() and Path(wt).resolve() != Path(main).resolve():
+                cmd += ["--add-dir", str(git_dir)]
+        return cmd + extra
     raise PairingError("unsupported implementer %s" % agent)
 
 
@@ -1194,6 +1217,89 @@ def ensure_lmstudio_shim(cfg: Dict[str, object]) -> str:
     return "http://127.0.0.1:%d" % port
 
 
+def strata_live(cfg: Dict[str, object], probe: bool = True) -> Dict[str, object]:
+    """Strata's configuration as installed right now, read from the install itself.
+
+    Chain: strata_agent.py -> strata-up.ps1 ($StartScript) -> run-*.bat (--config) -> strata-*.json,
+    plus /health when probe is set. Nothing here is cached, so a reinstall or retune is picked up on
+    the next call. `problems` lists anything that would stop a seat from running.
+    """
+    home = Path(str(cfg.get("strata_home") or ""))
+    out: Dict[str, object] = {"home": str(home), "agent": str(home / "strata_agent.py"),
+                              "up_script": str(home / "strata-up.ps1"), "problems": []}
+    problems: List[str] = out["problems"]  # type: ignore[assignment]
+    for key in ("agent", "up_script"):
+        if not Path(str(out[key])).is_file():
+            problems.append("missing %s" % out[key])
+    if problems:
+        return out
+    up = Path(str(out["up_script"])).read_text(encoding="utf-8", errors="replace")
+    m = re.search(r"\$StartScript\s*=\s*['\"]([^'\"]+)['\"]", up)
+    port_m = re.search(r"\[int\]\$Port\s*=\s*(\d+)", up)
+    if not m:
+        problems.append("strata-up.ps1 names no $StartScript"); return out
+    out["start_script"] = m.group(1)
+    if not Path(m.group(1)).is_file():
+        problems.append("missing start script %s" % m.group(1)); return out
+    bat = Path(m.group(1)).read_text(encoding="utf-8", errors="replace")
+    cm = re.search(r"\"--config\"\s+\"([^\"]+)\"", bat) or re.search(r"--config\s+(\S+)", bat)
+    if not cm:
+        problems.append("start script passes no --config"); return out
+    out["config"] = cm.group(1)
+    try:
+        conf = json.loads(Path(cm.group(1)).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        problems.append("cannot read config %s: %s" % (cm.group(1), exc)); return out
+    args = [str(a) for a in conf.get("args") or []]
+    def arg(flag: str) -> Optional[str]:
+        return args[args.index(flag) + 1] if flag in args and args.index(flag) + 1 < len(args) else None
+    weights = arg("--native") or arg("--model")
+    port = int(conf.get("port") or (port_m.group(1) if port_m else 8080))
+    out.update({"model_name": conf.get("model_name"), "weights": weights, "pack": arg("--pack"),
+                "max_context": arg("--max-context"), "expert_cache": arg("--expert-cache"),
+                "backend": conf.get("backend"), "reasoning_effort": conf.get("reasoning_effort"),
+                "port": port, "url": "http://127.0.0.1:%d" % port, "engine_args": args,
+                "server_options": {k: v for k, v in conf.items() if k not in ("args", "env", "exe", "cwd", "lib_dirs", "log", "tokenizer")}})
+    for label, path in (("engine", conf.get("exe")), ("weights", weights), ("pack", arg("--pack"))):
+        if path and not Path(str(path)).exists():
+            problems.append("missing %s %s" % (label, path))
+    if probe:
+        try:
+            with urllib.request.urlopen(str(out["url"]) + "/health", timeout=3) as resp:
+                health = json.loads(resp.read().decode("utf-8"))
+            out["running"] = {"loaded": health.get("loaded"), "model": health.get("model"), "max_context": health.get("max_context")}
+            if health.get("loaded") and health.get("model") not in (None, conf.get("model_name")):
+                problems.append("server on port %d runs %s, but the installed config is %s; POST /unload and rerun"
+                                % (port, health.get("model"), conf.get("model_name")))
+        except Exception:  # noqa: BLE001 - not running is normal; strata_agent.py starts it
+            out["running"] = None
+    return out
+
+
+def ensure_strata(cfg: Dict[str, object], console: Console) -> Dict[str, object]:
+    """Resolve the live Strata configuration before a strata seat runs; refuse if it is broken."""
+    live = strata_live(cfg)
+    if live["problems"]:
+        raise PairingError("Strata is not usable: %s (run `pairctl strata`)" % "; ".join(live["problems"]))  # type: ignore[arg-type]
+    console.say("  Strata: %s, context %s, %s (%s)" % (live.get("model_name"), live.get("max_context"),
+                "running" if live.get("running") else "will be started", live.get("config")))
+    return live
+
+
+def cmd_strata(args, console: Console) -> int:
+    live = strata_live(effective_config_for_args(None, args))
+    if getattr(args, "json", False):
+        console.say(json.dumps(live, indent=2))
+    else:
+        for key in ("home", "agent", "start_script", "config", "model_name", "weights", "pack", "max_context",
+                    "expert_cache", "backend", "reasoning_effort", "url", "running"):
+            if key in live:
+                console.say("  %-16s %s" % (key, live[key]))
+        for p in live["problems"]:  # type: ignore[union-attr]
+            console.say("  PROBLEM          %s" % p)
+    return 1 if live["problems"] else 0
+
+
 def resolve_launch_command(command: List[str]) -> List[str]:
     """Resolve argv[0] to a concrete path before spawning.
 
@@ -1231,6 +1337,8 @@ def dispatch_once(repo: Path, brief_id: str, cfg: Dict[str, object], console: Co
         raise PairingError("%s CLI %r not found" % (agent, command_name))
     if agent == "lmstudio":
         ensure_lmstudio_max_context(cfg, console)
+    if agent == "strata":
+        ensure_strata(cfg, console)
 
     if entry["state"] == "ready":
         entry["implementer"] = agent
@@ -1254,12 +1362,12 @@ def dispatch_once(repo: Path, brief_id: str, cfg: Dict[str, object], console: Co
     # (observed 2026-09-24, NULL.bbs round #1). A linked worktree shares the queue refs, so
     # pairctl works with the worktree as --repo; hand Cline only the worktree path.
     # Codex keeps the main path: its sandbox already confines edits to the worktree.
-    prompt_repo = wt if agent in ("cline", "lmstudio") else main
+    prompt_repo = wt if agent in ("cline", "lmstudio", "strata") else main
     prompt = _dispatch_prompt(prompt_repo, entry, Path(__file__), agent)
     command = build_dispatch_command(agent, cfg, wt, prompt, main)
     command = resolve_launch_command(command)
     env = dispatch_env(agent, cfg)
-    cwd = str(wt) if agent == "lmstudio" else None  # Claude Code roots itself at cwd
+    cwd = str(wt) if agent in ("lmstudio", "strata") else None  # Claude Code roots itself at cwd
     console.say("  dispatch #%s R%s -> %s [%s]" % (entry["id"], entry.get("round", 0), wt, agent))
     dispatch_id = str((entry.get("claim") or {}).get("dispatch_id") or uuid.uuid4())
     out_mode = str(cfg.get("dispatch_output") or "log")
@@ -1561,6 +1669,10 @@ def cmd_status(args, console: Console) -> int:
     if agent == "codex": console.say("  codex sandbox=%s" % cfg.get("codex_sandbox"))
     elif agent == "cline": console.say("  cline thinking=%s auto_approve=%s" % (cfg.get("cline_thinking"), cfg.get("cline_auto_approve")))
     elif agent == "lmstudio": console.say("  lmstudio url=%s model=%s" % (cfg.get("lmstudio_url"), cfg.get("lmstudio_model")))
+    elif agent == "strata":
+        live = strata_live(cfg, probe=False)
+        console.say("  strata model=%s context=%s config=%s%s" % (live.get("model_name"), live.get("max_context"), live.get("config"),
+                    "" if not live["problems"] else " PROBLEMS: " + "; ".join(live["problems"])))  # type: ignore[arg-type]
     elif agent == "copilot": console.say("  copilot model=%s mode=%s yolo=%s" % (cfg.get("copilot_model"), cfg.get("copilot_mode"), cfg.get("copilot_yolo")))
     if main:
         tier, why = detect_tier(main, cfg); console.say("  repo=%s\n  tier=%s (%s)" % (main, tier, why))
@@ -1604,6 +1716,11 @@ def cmd_doctor(args, console: Console) -> int:
         tag = "REQ" if required else "OPT"
         console.say("  %-12s %-4s %-3s %s" % (name_, "OK" if ok else "MISS", tag, detail))
     console.say("  selected implementer: %s" % selected)
+    if selected == "strata":
+        live = strata_live(cfg)
+        console.say("  strata model=%s config=%s" % (live.get("model_name"), live.get("config")))
+        for p in live["problems"]:  # type: ignore[union-attr]
+            failed = True; console.say("  strata PROBLEM: %s" % p)
     if selected == "copilot" and not bool(cfg.get("copilot_yolo", False)):
         console.say("  note: copilot-yolo is OFF; programmatic edits may require persisted permissions or enabling it explicitly")
     return 2 if failed else 0
@@ -1619,13 +1736,13 @@ def cmd_config(args, console: Console) -> int:
         value = parse_bool(args.value)
     elif key in ("max_rounds", "lease_minutes", "verification_timeout"):
         value = int(args.value)
-    elif key in ("codex_extra_args", "cline_extra_args", "copilot_extra_args", "lmstudio_extra_args", "implementer_priority"):
+    elif key in ("codex_extra_args", "cline_extra_args", "copilot_extra_args", "lmstudio_extra_args", "strata_extra_args", "implementer_priority"):
         value = json.loads(args.value)
         if not isinstance(value, list): raise PairingError("%s must be a JSON array" % key.replace("_", "-"))
     if key == "codex_sandbox" and value not in ("read-only", "workspace-write", "danger-full-access"):
         raise PairingError("invalid sandbox")
     if key == "implementer" and str(value).lower() not in ("auto",) + IMPLEMENTERS:
-        raise PairingError("implementer must be auto, codex, cline, or copilot")
+        raise PairingError("implementer must be one of: auto, %s" % ", ".join(IMPLEMENTERS))
     if key == "cline_thinking" and value not in ("none", "low", "medium", "high", "xhigh"):
         raise PairingError("invalid Cline thinking level")
     if key == "copilot_mode" and value not in ("interactive", "plan", "autopilot"):
@@ -1696,7 +1813,7 @@ def cmd_purge_queue(args, console: Console) -> int:
 # A slice whose seat keeps failing can be taken over by Claude (`--takeover`), after which it
 # needs a passing verification and a cross-seat review (`--review`) before audit.
 
-SWARM_SEATS = ("codex", "lmstudio")
+SWARM_SEATS = ("codex", "lmstudio", "strata")
 
 
 _LMS_LOCK = threading.Lock()
@@ -1860,6 +1977,8 @@ def cmd_swarm_run(args, console: Console, main: Path, cfg: Dict[str, object]) ->
         ensure_lmstudio_max_context(cfg, console)
         cfg["lmstudio_model"] = lmstudio_loaded_model(cfg)
         console.say("  LM Studio model: %s" % cfg["lmstudio_model"])
+    if any(str(b.get("seat")).lower() == "strata" for b in briefs):
+        ensure_strata(cfg, console)
     if cfg.get("require_clean_tree") and not working_tree_clean(main) and not args.allow_dirty:
         raise PairingError("main working tree is not clean")
     if not channel_ready(main):
@@ -1964,6 +2083,8 @@ def cmd_swarm_review(args, console: Console, main: Path, cfg: Dict[str, object])
     if reviewer == "lmstudio":
         ensure_lmstudio_max_context(cfg, console)
         cfg["lmstudio_model"] = lmstudio_loaded_model(cfg)
+    if reviewer == "strata":
+        ensure_strata(cfg, console)
     base = str(entry.get("base_oid") or "")
     prompt = " :: ".join([
         "CVM1 review I#%s seat=%s. READ-ONLY: do not edit files, do not run pairctl audit/land." % (entry["id"], reviewer),
@@ -2020,6 +2141,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = c("status", "configuration and lifecycle status"); p.add_argument("id", nargs="?")
     c("doctor", "check local prerequisites")
+    p = c("strata", "show Strata's live configuration (read from the install every time)"); p.add_argument("--json", action="store_true")
     p = c("config", "show/set config"); p.add_argument("key", nargs="?"); p.add_argument("value", nargs="?")
     c("on", "enable pairing"); c("off", "disable pairing")
     p = c("profile", "manage profiles"); p.add_argument("action", choices=("list","show","use","set")); p.add_argument("name", nargs="?"); p.add_argument("key", nargs="?"); p.add_argument("value", nargs="?")
@@ -2053,7 +2175,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     if not args.command: parser.print_help(); return 0
     console = Console()
     handlers = {
-        "status": cmd_status, "doctor": cmd_doctor, "config": cmd_config,
+        "status": cmd_status, "doctor": cmd_doctor, "strata": cmd_strata, "config": cmd_config,
         "on": lambda a,c: cmd_switch(a,c,True), "off": lambda a,c: cmd_switch(a,c,False),
         "profile": cmd_profile, "protocol": cmd_protocol, "channel": cmd_channel, "init": cmd_init,
         "brief": cmd_brief, "queue": cmd_queue, "claim": cmd_claim, "requeue": cmd_requeue,

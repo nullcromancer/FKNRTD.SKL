@@ -174,7 +174,7 @@ def main(argv=None) -> int:
     parser.add_argument("--uninstall", action="store_true", help="remove the skill from selected target(s)")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--enabled", choices=("on", "off"), help="initial shared pairing state")
-    parser.add_argument("--implementer", choices=("auto", "codex", "cline", "copilot"),
+    parser.add_argument("--implementer", choices=("auto", "codex", "cline", "copilot", "lmstudio", "strata"),
                         help="default implementing CLI")
     parser.add_argument("--sandbox", choices=("read-only", "workspace-write", "danger-full-access"),
                         help="Codex sandbox used by pairctl dispatch")
