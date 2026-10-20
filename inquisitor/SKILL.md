@@ -36,13 +36,12 @@ Output, always relative to the **current working directory**:
 4. **Build**: `python <skill-dir>/scripts/build.py ./inquisitor/questions.json`
    (`<skill-dir>` is the folder holding this SKILL.md). It validates, then writes
    `./inquisitor/inquisitor.html`. Fix any validation errors it lists.
-5. **Tell the user** to open `inquisitor/inquisitor.html` in Chrome or Edge, click **Connect
-   folder**, pick the `inquisitor` folder once, and answer. Every answer rewrites `answers.md`
+5. **Tell the user** to open `inquisitor/inquisitor.html` in Chrome or Edge, click **Save
+   to…**, choose where to save `answers.md` (the `inquisitor` folder is best), and answer. Every answer rewrites `answers.md`
    within a second and is restored on reopening. Other browsers keep answers in the browser only
    and download `answers.md` on Finish. Do not claim the file is being written until the user
-   confirms they connected the folder. Connect copies the folder's absolute path to the
-   clipboard (paste it into the picker's address bar), and a Finish download tells the user to
-   move the file there. If `answers.md` is missing from `./inquisitor/`, check Downloads.
+   confirms they connected the folder. If `answers.md` is not where expected, ask where the user saved it (a Finish download in a
+   non-Chrome browser goes to Downloads).
 6. **When the user returns**: run `python <skill-dir>/scripts/build.py --status` for counts and
    open blockers, then read `./inquisitor/answers.md`. Rules for using it:
    - Answers are binding decisions. Own-answer text and notes override the option text.

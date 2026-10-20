@@ -99,7 +99,7 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
   <span id="count"></span>
   <span id="save" class="warn">Not connected</span>
   <div class="tools">
-    <button id="bConnect" class="small" title="Choose this inquisitor folder once; answers.md is then written here after every answer">Connect folder</button>
+    <button id="bConnect" class="small" title="Choose where to save answers.md; it is then rewritten there after every answer">Save to…</button>
     <button id="bFinal" class="small primary">Finish</button>
     <button id="bTheme" class="small" title="Toggle light / dark">◐</button>
   </div>
@@ -136,7 +136,7 @@ const fmt=s=>esc(s).replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*([^*]+)
 
 let state={v:1,answers:{},updated:null,finalized:null};   // answers[id]={sel:[idx],other,note,deferred,bulk}
 let dirHandle=null, dirty=false, writing=false, writeAgain=false, saveTimer=null;
-const FSA=!!window.showDirectoryPicker;
+const FSA=!!window.showSaveFilePicker;
 const ans=id=>state.answers[id]||(state.answers[id]={sel:[],other:"",note:"",deferred:false,bulk:false});
 const isAnswered=id=>{const a=state.answers[id];return !!a&&(a.sel.length>0||a.other.trim()!=="")};
 const isDeferred=id=>{const a=state.answers[id];return !!a&&a.deferred&&!isAnswered(id)};
@@ -193,15 +193,14 @@ function localSave(){try{state.updated=new Date().toISOString();localStorage.set
 function schedule(){
   dirty=true; localSave(); refreshHeader();
   clearTimeout(saveTimer); saveTimer=setTimeout(flush,500);
-  if(!dirHandle) setSave("warn",FSA?`Not saved to ${ANSWERS_FILE}: click Connect folder`:"Saved in browser only");
+  if(!dirHandle) setSave("warn",FSA?`Not saved to ${ANSWERS_FILE}: click Save to`:"Saved in browser only");
 }
 async function flush(){
   if(!dirHandle||!dirty) return;
   if(writing){writeAgain=true;return}
   writing=true; dirty=false;
   try{
-    const fh=await dirHandle.getFileHandle(ANSWERS_FILE,{create:true});
-    const w=await fh.createWritable(); await w.write(buildMd(!!state.finalized)); await w.close();
+    const w=await dirHandle.createWritable(); await w.write(buildMd(!!state.finalized)); await w.close();
     setSave("ok",`Saved ${ANSWERS_FILE} at ${new Date().toLocaleTimeString()}`);
   }catch(e){dirty=true;setSave("bad","Write failed: click to reconnect");console.error(e)}
   writing=false; if(writeAgain){writeAgain=false;flush()}
@@ -213,7 +212,7 @@ async function attach(h){
   if((await h.requestPermission({mode:"readwrite"}))!=="granted"){toast("Permission denied");return false}
   dirHandle=h; await putHandle(h);
   try{
-    const fh=await h.getFileHandle(ANSWERS_FILE); const s=parseState(await (await fh.getFile()).text());
+    const s=parseState(await (await h.getFile()).text());
     if(s&&(!state.updated||(s.updated&&s.updated>=state.updated))){state=s;renderAll();toast(`Resumed from ${ANSWERS_FILE}`)}
   }catch(e){/* no file yet */}
   dirty=true; await flush(); return true;
@@ -221,15 +220,14 @@ async function attach(h){
 async function connect(){
   if(!FSA){toast("This browser cannot write files. Use Chrome or Edge, or Finish to download.");return}
   const last=await getHandle();
-  if(SPEC.dirPath&&!last){try{await navigator.clipboard.writeText(SPEC.dirPath);toast("Path copied. Paste it into the folder picker's address bar: "+SPEC.dirPath)}catch(e){toast("Pick this folder: "+SPEC.dirPath)}}
-  try{await attach(await showDirectoryPicker({id:"inquisitor",mode:"readwrite",startIn:last||"documents"}))}
+  try{await attach(await showSaveFilePicker({id:"inquisitor",suggestedName:ANSWERS_FILE,startIn:last||"documents",types:[{description:"Markdown",accept:{"text/markdown":[".md"]}}]}))}
   catch(e){if(e.name!=="AbortError")toast("Could not connect: "+e.message)}
 }
 async function reconnect(){
-  if(!FSA) return; const h=await getHandle(); if(!h) return;
+  if(!FSA) return; const h=await getHandle(); if(!h||h.kind!=="file") return;
   try{
     if((await h.queryPermission({mode:"readwrite"}))==="granted") await attach(h);
-    else{const s=$("#save");setSave("warn",`Click to reconnect ${h.name}/`);s.style.cursor="pointer";
+    else{const s=$("#save");setSave("warn",`Click to reconnect ${h.name}`);s.style.cursor="pointer";
       s.onclick=async()=>{if(await attach(h)){s.onclick=null;s.style.cursor=""}}}
   }catch(e){}
 }
@@ -291,7 +289,7 @@ function renderIntro(){
   intro.append(el("h2",{},"How this works"));
   if(SPEC.subtitle) intro.append(el("p",{html:fmt(SPEC.subtitle)}));
   intro.append(el("ul",{},
-    el("li",{html:`<b>Click Connect folder</b> and choose the folder this page is in. Every answer is then written to <code>${esc(ANSWERS_FILE)}</code> there within a second, and restored when you reopen the page. (Chrome or Edge. Elsewhere answers stay in the browser and Finish downloads the file.)`}),
+    el("li",{html:`<b>Click Save to…</b> and choose where to save <code>${esc(ANSWERS_FILE)}</code> (the inquisitor folder is best). Every answer is then written to it within a second, and restored when you reopen the page. (Chrome or Edge. Elsewhere answers stay in the browser and Finish downloads the file.)`}),
     el("li",{html:`<span class="rec">Recommended</span> marks the suggested option and says why. Pick it, pick another, write your own, add notes, or <b>Defer</b>.`}),
     el("li",{html:"<b>blocker</b> questions change the design; <b>important</b> shape the next steps; <b>later</b> can wait. Use the filters on the left."}),
     el("li",{html:"The per-section bulk button is recorded as <i>accepted in bulk</i>, so a considered answer stays distinguishable from a default."}),
@@ -346,7 +344,7 @@ function finish(){
     el("p",{style:"color:var(--mute);font-size:13.5px"},`This marks ${ANSWERS_FILE} as FINAL. You can still reopen the page and keep editing.`),
     el("div",{class:"row"},
       el("button",{class:"primary",onclick:async()=>{state.finalized=new Date().toISOString();schedule();
-        if(dirHandle){await flush();toast(`${ANSWERS_FILE} marked FINAL`)}else{download(ANSWERS_FILE,buildMd(true));toast("Downloaded "+ANSWERS_FILE+(SPEC.dirPath?". Move it to "+SPEC.dirPath:""))}dlg.close()}},"Mark FINAL"),
+        if(dirHandle){await flush();toast(`${ANSWERS_FILE} marked FINAL`)}else{download(ANSWERS_FILE,buildMd(true));toast("Downloaded "+ANSWERS_FILE)}dlg.close()}},"Mark FINAL"),
       el("button",{onclick:async()=>{try{await navigator.clipboard.writeText(buildMd(true));toast("Copied")}catch(e){toast("Clipboard blocked")}}},"Copy markdown"),
       el("button",{onclick:()=>dlg.close()},"Close")));
   dlg.showModal();
@@ -359,8 +357,8 @@ try{const t=localStorage.getItem("inquisitor-theme");if(t)document.documentEleme
 try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s&&s.answers)state=s}catch(e){}
 window.addEventListener("beforeunload",e=>{if(dirty&&dirHandle){e.preventDefault();e.returnValue=""}});
 if(typeof module==="undefined"||!module.exports){renderIntro();renderAll();
-  setSave("warn",FSA?`Not connected: click Connect folder`:"Saved in browser only (use Chrome/Edge for a file)");
-  if(Object.keys(state.answers).length) setSave("warn",FSA?"Restored from browser. Click Connect folder":"Saved in browser only");
+  setSave("warn",FSA?`Not saved to a file: click Save to…`:"Saved in browser only (use Chrome/Edge for a file)");
+  if(Object.keys(state.answers).length) setSave("warn",FSA?"Restored from browser. Click Save to…":"Saved in browser only");
   reconnect();}
 </script>
 </body>

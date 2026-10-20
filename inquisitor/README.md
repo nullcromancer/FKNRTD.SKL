@@ -16,7 +16,7 @@ You have a project with thirty open decisions and no patience for a chat that as
 
 - **What it does:** the assistant reads your READMEs and notes, finds where your goal fights your own rules, and writes `questions.json`. `scripts/build.py` validates it and renders `inquisitor.html` from `assets/template.html`. (SKILL.md, scripts/build.py:98)
 - **What you get on the page:** options with consequences, a recommended pick with the reason, free text, notes, Defer, per-section bulk accept, blocker/important/later tags, filters and a progress bar. (assets/template.html)
-- **How answers survive:** open the page in Chrome or Edge, click **Connect folder** once, pick the `inquisitor` folder. Each answer rewrites `answers.md` within about 500 ms and is restored on reopen. Other browsers keep answers in the browser and download the file on Finish. (assets/template.html: `flush`, `attach`)
+- **How answers survive:** open the page in Chrome or Edge, click **Save to…** once, choose where to save `answers.md`. Each answer rewrites `answers.md` within about 500 ms and is restored on reopen. Other browsers keep answers in the browser and download the file on Finish. (assets/template.html: `flush`, `attach`)
 - **How the assistant reads it back:** `answers.md` is plain Markdown. Answers are binding, "accepted in bulk" is a default to confirm, deferred and unanswered are open. (SKILL.md, step 6)
 - **Footprint:** Python 3.8+ standard library only. The page makes no network calls. No manifests, containers or CI exist in this repo.
 - **Maturity:** small and stable. Six unit tests, no license file yet.
@@ -78,7 +78,7 @@ flowchart LR
   B --> C[scripts/build.py]
   T[assets/template.html] --> C
   C --> D[inquisitor.html]
-  D -->|you answer, Connect folder| E[answers.md]
+  D -->|you answer, Save to…| E[answers.md]
   E -->|build.py --status, then read| A
 ```
 
@@ -142,7 +142,7 @@ python scripts/build.py --status                      counts and open blockers f
 python scripts/build.py spec.json --out some/dir      write somewhere other than ./inquisitor
 ```
 
-Then open `inquisitor/inquisitor.html` in Chrome or Edge, click **Connect folder**, choose the `inquisitor` folder, and answer. **Finish** marks `answers.md` as FINAL; you can reopen and keep editing.
+Then open `inquisitor/inquisitor.html` in Chrome or Edge, click **Save to…**, choose the `inquisitor` folder, and answer. **Finish** marks `answers.md` as FINAL; you can reopen and keep editing.
 
 Install targets (user scope):
 
@@ -197,7 +197,7 @@ None. The save pill in the page header shows the last write time or a failure; w
 
 | Problem | Fix |
 | --- | --- |
-| Header says "Not connected" | Click **Connect folder** and pick the `inquisitor` folder |
+| Header says "Not connected" | Click **Save to…** and choose where to save `answers.md` |
 | "Click to reconnect" after reopening | Click the pill and grant access again; browsers drop the permission between visits |
 | Firefox or Safari | No folder write. Answers stay in the browser; **Finish** downloads `answers.md` |
 | `spec invalid:` from build | Fix each listed error and rebuild |
