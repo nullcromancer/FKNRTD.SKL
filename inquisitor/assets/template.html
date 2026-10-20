@@ -220,7 +220,9 @@ async function attach(h){
 }
 async function connect(){
   if(!FSA){toast("This browser cannot write files. Use Chrome or Edge, or Finish to download.");return}
-  try{await attach(await showDirectoryPicker({id:"inquisitor",mode:"readwrite"}))}
+  const last=await getHandle();
+  if(SPEC.dirPath&&!last){try{await navigator.clipboard.writeText(SPEC.dirPath);toast("Path copied. Paste it into the folder picker's address bar: "+SPEC.dirPath)}catch(e){toast("Pick this folder: "+SPEC.dirPath)}}
+  try{await attach(await showDirectoryPicker({id:"inquisitor",mode:"readwrite",startIn:last||"documents"}))}
   catch(e){if(e.name!=="AbortError")toast("Could not connect: "+e.message)}
 }
 async function reconnect(){
@@ -344,7 +346,7 @@ function finish(){
     el("p",{style:"color:var(--mute);font-size:13.5px"},`This marks ${ANSWERS_FILE} as FINAL. You can still reopen the page and keep editing.`),
     el("div",{class:"row"},
       el("button",{class:"primary",onclick:async()=>{state.finalized=new Date().toISOString();schedule();
-        if(dirHandle){await flush();toast(`${ANSWERS_FILE} marked FINAL`)}else{download(ANSWERS_FILE,buildMd(true));toast("Downloaded "+ANSWERS_FILE)}dlg.close()}},"Mark FINAL"),
+        if(dirHandle){await flush();toast(`${ANSWERS_FILE} marked FINAL`)}else{download(ANSWERS_FILE,buildMd(true));toast("Downloaded "+ANSWERS_FILE+(SPEC.dirPath?". Move it to "+SPEC.dirPath:""))}dlg.close()}},"Mark FINAL"),
       el("button",{onclick:async()=>{try{await navigator.clipboard.writeText(buildMd(true));toast("Copied")}catch(e){toast("Clipboard blocked")}}},"Copy markdown"),
       el("button",{onclick:()=>dlg.close()},"Close")));
   dlg.showModal();

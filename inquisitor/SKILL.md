@@ -40,7 +40,9 @@ Output, always relative to the **current working directory**:
    folder**, pick the `inquisitor` folder once, and answer. Every answer rewrites `answers.md`
    within a second and is restored on reopening. Other browsers keep answers in the browser only
    and download `answers.md` on Finish. Do not claim the file is being written until the user
-   confirms they connected the folder.
+   confirms they connected the folder. Connect copies the folder's absolute path to the
+   clipboard (paste it into the picker's address bar), and a Finish download tells the user to
+   move the file there. If `answers.md` is missing from `./inquisitor/`, check Downloads.
 6. **When the user returns**: run `python <skill-dir>/scripts/build.py --status` for counts and
    open blockers, then read `./inquisitor/answers.md`. Rules for using it:
    - Answers are binding decisions. Own-answer text and notes override the option text.

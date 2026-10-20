@@ -103,7 +103,8 @@ def build(spec_path: Path, out: Path) -> Path:
     spec.setdefault("id", slug(spec["title"]))
     spec.setdefault("answersFile", "answers.md")
     spec.setdefault("readerNote", DEFAULT_READER_NOTE)
-    blob = json.dumps(spec, ensure_ascii=False).replace("</", "<\\/").replace("<!--", "<\\u0021--")
+    # the page cannot learn its own folder; hand it the path so Connect can steer the picker there
+    blob = json.dumps({**spec, "dirPath": str(out.resolve())}, ensure_ascii=False).replace("</", "<\\/").replace("<!--", "<\\u0021--")
     title = spec["title"].replace("&", "&amp;").replace("<", "&lt;")
     html = TEMPLATE.read_text(encoding="utf-8")
     if "/*__SPEC__*/null" not in html:
