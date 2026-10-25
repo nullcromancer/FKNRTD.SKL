@@ -1359,7 +1359,7 @@ def dispatch_once(repo: Path, brief_id: str, cfg: Dict[str, object], console: Co
 
     # Cline treats any absolute path in its prompt as the project location: given the MAIN
     # checkout as --repo, it read and edited the main repository instead of its worktree
-    # (observed 2026-09-24, NULL.bbs round #1). A linked worktree shares the queue refs, so
+    # (observed 2026-09-24, round #1). A linked worktree shares the queue refs, so
     # pairctl works with the worktree as --repo; hand Cline only the worktree path.
     # Codex keeps the main path: its sandbox already confines edits to the worktree.
     prompt_repo = wt if agent in ("cline", "lmstudio", "strata") else main
