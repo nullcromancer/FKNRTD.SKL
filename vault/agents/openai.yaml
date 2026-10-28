@@ -1,0 +1,4 @@
+interface:
+  display_name: "Vault"
+  short_description: "Identify and value items in photo ZIPs"
+  default_prompt: "Use $vault to inventory items from my ZIP of photos and create an Excel catalog with cropped images, values, sources, and confidence."

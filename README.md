@@ -20,6 +20,7 @@ Each folder is a self-contained skill: a `SKILL.md` that tells an assistant what
 | `conspirator` | Multi-agent pairing: Claude audits, Codex/Cline/Copilot implement in isolated worktrees, talking in compact packets. |
 | `inquisitor` | Grills you with a questionnaire page that autosaves answers to `answers.md`, then reads them back as the spec. |
 | `odin` | Read-only repository forensics and documentation: evidence packet, README, docs site, developer handoff. |
+| `vault` | Photo ZIPs to researched item inventories: individual crops, resale estimates, source links and identity confidence. |
 
 The skills are independent. There is no shared library, no top-level build and no CI in this repo. Start with the skill you want and read its `SKILL.md`.
 
@@ -27,8 +28,8 @@ The skills are independent. There is no shared library, no top-level build and n
 
 ## Last Updated
 
-- **Last Updated:** 2026-10-01
-- **Last Commit Date:** 2026-10-01T21:02:02-04:00, commit `1404ba1` on `main` (from a read-only `git log`)
+- **Last Updated:** 2026-10-28
+- **Latest commit:** see GitHub history for the current revision.
 
 ## Table of Contents
 
@@ -64,6 +65,7 @@ A multi-component repo: 5 skill folders, about 400 files. The repo root holds on
 | conspirator | Skill + runtime | Python (stdlib) | Python 3.8+ | `conspirator/` (`scripts/pairctl.py`, `install.py`) | Pair two AI seats with Git-ref queueing and audit gates |
 | inquisitor | Skill + builder | Python (stdlib), vanilla JS | Python 3.8+, Chrome/Edge for autosave | `inquisitor/` (`scripts/build.py`, `assets/template.html`) | Questionnaire page that writes `answers.md` |
 | odin | Skill + toolkit | Python (stdlib) | Python 3.8+ | `odin/` (`scripts/odin.py`, `scripts/odin_lib/`, `install/`) | Deterministic repo forensics and documentation |
+| vault | Skill + image/Excel pipeline | Python, Pillow, Node artifact-tool | Pillow and a capable XLSX runtime | `vault/` | Visual item separation, identification, price research and image-rich inventory |
 
 ## Architecture Overview
 
@@ -74,6 +76,7 @@ flowchart LR
     C[conspirator]
     I[inquisitor]
     O[odin]
+    V[vault]
   end
   repo -->|install.py / install scripts| S1[~/.claude/skills]
   repo --> S2[~/.agents/skills]
@@ -99,6 +102,7 @@ There is no runtime coupling between skills. The only shared thing is the instal
   - conspirator/    SKILL.md, README.md, agents/, references/, scripts/pairctl.py, tests/, install.py
   - inquisitor/     SKILL.md, README.md, assets/, examples/, scripts/build.py, tests/, install.py
   - odin/           SKILL.md, README.md, PROTOCOL.md, AGENTS.md, scripts/, reference/, templates/, prompts/, install/, tests/, LICENSE
+  - vault/          SKILL.md, README.md, agents/, references/, scripts/, tests/
   - .gitattributes
   - .gitignore
 ```
@@ -147,6 +151,7 @@ Insufficient Evidence of CI/CD. Searched for `.github/workflows`, pipeline files
 | conspirator | `conspirator/scripts/pairctl.py` | `conspirator/tests/test_smoke.py` |
 | inquisitor | `inquisitor/scripts/build.py`, `inquisitor/install.py` | `inquisitor/tests/test_build.py` |
 | odin | `odin/scripts/odin.py`, `odin/scripts/odin_lib/` | `odin/tests/test_odin.py` |
+| vault | `vault/scripts/images.py`, `vault/scripts/build_workbook.mjs`, `vault/scripts/finalize_links.py` | `vault/tests/` |
 
 Each skill's own README holds the detailed symbol index. This README does not repeat it.
 
@@ -183,6 +188,7 @@ Versions and dates are not tagged at repo level; entries follow commit order.
 
 - `butcher`, `conspirator`, `odin` skills.
 - `inquisitor` skill, imported with history.
+- `vault` photo inventory and research skill.
 - This README.
 
 #### Changed
