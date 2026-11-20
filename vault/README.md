@@ -1,24 +1,7 @@
-# Vault
+Y™Áäx-ÆÈ‹j◊ù¢Îi∫⁄+äßj[hëÈ‹¢ÈÌÁüS¢÷•¢Îi∫ŸbùÎ5# Vault 2.0
 
-Identify and price objects from ZIPs of photographs, including pictures containing several saleable items.
+Vault is a Windows-first, agent-assisted visual inventory. SQLite is authoritative; the host agent supplies visual identification and public research, while the Python runtime manages files and records. Python 3.10+ is supported. The runtime is not a standalone image-recognition/research system.
 
-Start with [SKILL.md](SKILL.md). The skill guides an assistant through inspecting every photo, drawing separate object crops, researching exact identities and resale comparables, and building a confidence-scored Excel inventory.
+Install from this directory with `python install.py --target codex`, `--target claude`, or `--target both`. Set `VAULT_DATA_HOME` to keep private learning/cache/correction data outside the installed skill. Use `--sync` only to update an existing local installation.
 
-## Output
-
-An `.xlsx` workbook with one row per distinct item: an embedded crop, item name, item type, approximate value in USD, direct price source, identity confidence, range, match specificity, price basis, original photo name, notes and item ID. `.xls` can be supplied only after a verified legacy conversion because simply renaming `.xlsx` is invalid.
-
-## Dependencies
-
-- Python with Pillow for safe ZIP image normalization and cropping (`scripts/images.py`).
-- Web browsing and image inspection for identification and live comparable-price research; scripts do not guess the object or its price.
-- The Codex primary Node runtime with `@oai/artifact-tool` to run `scripts/build_workbook.mjs`, or another XLSX writer with embedded-image support. Copy the `.mjs` into a temporary work directory and make the runtime's `node_modules` available there.
-- Python standard library `scripts/finalize_links.py` to add native Excel hyperlinks after export.
-
-## Improve accuracy
-
-Corrections are recorded as general recognition rules in `references/recognition_rules.md` after the user confirms the item. Never add raw personal photographs or inventories to the repository without permission.
-
-## Tests
-
-`python -m unittest discover -s tests -v` checks ZIP safety, multiple-object cropping, and workbook media/links (the latter runs when the artifact-tool runtime is available).
+From this directory, w◊üm¢Gß≤⁄Óù∆≠y’d crops after commit. Corrections and provisional generalized rules are stored privately under `VAULT_DATA_HOME`; they do not train model weights. Pillow handles common formats, `pillow-heif` decodes HEIF/HEIC, and `rawpy` decodes supported DNG/CR2/CR3/NEF/ARW/RAF/ORF/RW2 camera RAW. Decoder support is version/platform dependent and doctor reports installed capability; test an unfamiliar camera format before bulk scanning. Restore expects its matching Catalog crop assets. All synthetic test URLs are examples, not actual valuation evidence. Never publish a private Catalog or Scanned folder.
